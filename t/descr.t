@@ -246,10 +246,8 @@ sub test_frequency_distribution {
 }
 
 
+#  here is where we deviate from S::D::F
 sub test_percentiles {
-    local $TODO = 'Percentiles not implemented yet';
-    ok (0, $TODO);
-    return;
 
     # test #10 and #11
     # Test the percentile function and caching
@@ -258,13 +256,26 @@ sub test_percentiles {
     ##Check algorithm
     # TEST
     is ($stat->percentile(50),
-        4,
+        5.5,
         "percentile function and caching - 1",
     );
     # TEST
     is ($stat->percentile(25),
-        -2,
+        -0.5,
         "percentile function and caching - 2",
+    );
+    $stat = $stats_class->new();
+    $stat->add_data(0..100);
+    ##Check algorithm
+    # TEST
+    is ($stat->percentile(50),
+        50,
+        "percentile function and caching - 50% of 0..100",
+    );
+    # TEST
+    is ($stat->percentile(25),
+        25,
+        "percentile function and caching - 25% of 0..100",
     );
 }
 
@@ -435,11 +446,8 @@ sub test_skew_kurt {
 
 }
 
+#  remnant from S::D::F - not convinced we need it here
 sub test_percentile_does_not_die {
-    local $TODO = 'Percentiles not implemented yet';
-    ok (0, $TODO);
-    return;
-
     # This is a fix for:
     # https://rt.cpan.org/Ticket/Display.html?id=72495
     # Thanks to Robert Messer

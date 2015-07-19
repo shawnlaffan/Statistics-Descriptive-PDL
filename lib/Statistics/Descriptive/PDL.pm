@@ -226,6 +226,17 @@ sub mode {
     return $mode;
 }
 
+#  need to convert $p to fraction, or perhaps die if it is betwen 0 and 1
+sub percentile {
+    my ($self, $p) = @_;
+    my $piddle = $self->_get_piddle
+      // return undef;
+
+    my $count = $piddle->nelem;
+    
+    return undef if !$count;
+    return $piddle->pct($p / 100);
+}
 
 #  place holders
 sub quantile {undef}
