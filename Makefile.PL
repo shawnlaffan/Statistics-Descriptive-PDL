@@ -16,6 +16,7 @@ WriteMakefile(
     },
     BUILD_REQUIRES => {
         'Test::More' => 0,
+        'Statistics::Descriptive' => "3.06",
     },
     PREREQ_PM => {
         #  PDL:: versions should be able to go lower, but need to start somewhere

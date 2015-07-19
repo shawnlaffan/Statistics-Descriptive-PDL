@@ -11,8 +11,10 @@ use Utils qw/is_between compare_hash_by_ranges/;
 
 use Benchmark;
 use Statistics::Descriptive::PDL;
+use Statistics::Descriptive;
 
 my $stats_class = 'Statistics::Descriptive::PDL';
+my $tolerance = 1E-13;
 
 use Devel::Symdump;
 my $obj = Devel::Symdump->rnew(__PACKAGE__); 
@@ -43,6 +45,33 @@ sub main {
     return 0;
 }
 
+
+sub test_same_as_stats_descr_full {
+    my $object_pdl = $stats_class->new;
+    my $object_sdf = Statistics::Descriptive::Full->new;
+
+    my @data = (1..100, 5, 5);
+    $object_pdl->add_data(@data);
+    $object_sdf->add_data(@data);
+
+    my @methods = qw /mean standard_deviation median skewness kurtosis min max/;
+    my $test_name
+      = 'Methods match between Statistics::Descriptive::PDL and '
+      . 'Statistics::Descriptive::Full';
+    subtest $test_name => sub {
+        foreach my $method (@methods) {
+            #diag $method;
+            my $got = $object_pdl->$method;
+            my $exp = $object_sdf->$method;
+            is_between (
+                $got,
+                $exp - $tolerance,
+                $exp + $tolerance,
+                $method,
+            );
+        }
+    };
+}
 
 
 sub test_least_squares {
