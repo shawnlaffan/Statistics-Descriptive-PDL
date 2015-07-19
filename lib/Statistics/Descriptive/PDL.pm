@@ -132,7 +132,8 @@ sub standard_deviation {
 
 sub variance {
     my $self = shift;
-    return $self->{sd} ** 2;
+    my $sd = $self->standard_deviation;
+    return defined $sd ? $sd ** 2 : undef;
 }
 
 sub median {
@@ -208,9 +209,28 @@ sub geometric_mean {
     my $gm = $powered->dprodover;
 }
 
-sub least_squares_fit {
-    return;
+sub mode {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+
+    my $count = $self->count;
+
+    return undef if !$count;
+    my $mode = $piddle->mode;
+    if ($mode == 9805800) {
+        #  PDL seems to return 9805800 if there is nothing unique.
+        #  Not sure if it is always the case, though
+        $mode = undef;
+    }
+    return $mode;
 }
+
+
+#  place holders
+sub quantile {undef}
+sub trimmed_mean {undef}
+sub least_squares_fit {undef}
 
 
 1;

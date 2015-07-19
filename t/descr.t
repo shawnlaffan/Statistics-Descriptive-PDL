@@ -61,6 +61,7 @@ sub test_same_as_stats_descr_full {
         sample_range
         harmonic_mean
         geometric_mean
+        mode
     /;
 
     my $test_name
@@ -82,7 +83,8 @@ sub test_same_as_stats_descr_full {
 
 
 sub test_least_squares {
-    local $TODO = 1;
+    local $TODO = 'least squares not implemented yet, and possibly won\'t be';
+    ok (0, $TODO);
     return;
 
     # test #1
@@ -150,6 +152,7 @@ sub test_harmonic_mean {
 #  do we want this in S::D::PDL?
 sub test_frequency_distribution {
     local $TODO = 'Frequency distribution not implemented yet';
+    ok (0, $TODO);
     return;
     
     # test #7
@@ -347,8 +350,6 @@ sub test_basics {
 
 
 sub test_geometric_mean {
-    local $TODO = 'Geometric mean not implemented yet';
-    return;
     # test #9
     # test the frequency distribution with specified bins
     my $stat = $stats_class->new();
@@ -454,10 +455,6 @@ sub test_percentile_does_not_die {
 
 #  test stats when no data have been added
 sub test_stats_when_no_data_added {
-    local $TODO = 'Too many methods not implemented yet to test stats when no data have been added';
-    ok (0, $TODO);
-    return;
-
     my $stat = $stats_class->new();
     my ($result, $str);
 
@@ -468,8 +465,9 @@ sub test_stats_when_no_data_added {
         min max sample_range
         skewness kurtosis median
         harmonic_mean geometric_mean
-        mode percentile 
+        mode 
     };
+    #  percentile 
     # frequency_distribution least_squares_fit
     #  mindex maxdex
     #  least_squares_fit is handled in an earlier test, so is actually a duplicate here
@@ -484,15 +482,18 @@ sub test_stats_when_no_data_added {
     }
 
     #  quantile and trimmed_mean require valid args, so don't test in the method loop
-    my $method = 'quantile';
-    $result = $stat->$method(1);
-    # TEST
-    ok (!defined ($result), "$method is undef when object has no data.");
-
-    $method = 'trimmed_mean';
-    $result = $stat->$method(0.1);
-    # TEST
-    ok (!defined ($result), "$method is undef when object has no data.");
+    {
+        local $TODO = 'quantile and trimmed_mean not working yet';
+        my $method = 'quantile';
+        $result = $stat->$method(1);
+        # TEST
+        ok (!defined ($result), "$method is undef when object has no data.");
+    
+        $method = 'trimmed_mean';
+        $result = $stat->$method(0.1);
+        # TEST
+        ok (!defined ($result), "$method is undef when object has no data.");
+    }
 }
 
 #  test SD when only one value added
@@ -529,6 +530,7 @@ sub test_returns_undef_in_list_context {
 
 sub test_data_with_samples {
     local $TODO = 'Samples not handled yet';
+    ok (0, $TODO);
     return;
 
     my $stats = $stats_class->new();
@@ -578,7 +580,7 @@ sub test_mindex_maxdex {
 
     # TEST*2
     {
-        local $TODO = 'Sorting not implemneted yet, so skip mindex/maxdex after median';
+        local $TODO = 'Sorting not implemented yet, so skip mindex/maxdex after median';
         $stat1->median;  #  trigger a sort
         $e_maxdex = scalar @data1 + scalar @data2 - 1;
         is ($stat1->mindex, 0, "mindex is correct after sorting");
