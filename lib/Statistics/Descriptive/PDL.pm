@@ -4,8 +4,182 @@ use 5.010;
 use strict;
 use warnings;
 
+#  avoid loading too much, especially into our name space
+use PDL::Lite '2.012';
+use PDL::Stats::Basic;
 
 our $VERSION = '0.01';
+
+our $Tolerance = 0.0;  #  for compatibility with Stats::Descr, but not used here
+
+sub new {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+
+    my $self = {piddle => undef};
+    bless $self, $class;
+
+    return $self;
+}
+
+
+sub add_data {
+    my $self = shift;
+    my $data;
+
+    if (ref $_[0] eq 'ARRAY') {
+        $data = $_[0];
+    }
+    else {
+        $data = \@_;
+    }
+    
+    return if !scalar @$data;
+    
+    my $piddle;    
+    my $count = $self->count;
+
+    #  $count is modified lower down, but we need this flag after that
+    my $has_existing_data = $count;
+
+    # Take care of appending to an existing data set
+    if ($has_existing_data) {
+        $piddle = $self->_get_piddle;
+        $piddle = $piddle->append (pdl ($data));
+        $self->_set_piddle ($piddle);
+    }
+    else {
+        $self->_set_piddle ($data);
+        $piddle = $self->_get_piddle;
+    }
+
+    # probably inefficient, as we often only want some of these,
+    #my ($mean, $prms, $median, $min, $max, $adev, $rms) = $self->_get_piddle->statsover;
+    $self->{mean}   = $piddle->average->sclr;
+    $self->{sum}    = $piddle->sum;
+    $self->{sd}     = $self->standard_deviation;
+    $self->{median} = $piddle->median;
+    $self->{min}    = $piddle->min;
+    $self->{max}    = $piddle->max;
+
+    return $self->count;
+}
+
+#  need to croak if $data is multidimensional, or perhaps just flatten it out
+sub _set_piddle {
+    my ($self, $data) = @_;
+    $self->{piddle} = pdl $data;
+}
+
+sub _get_piddle {
+    my $self = shift;
+    return $self->{piddle};
+}
+
+sub count {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return 0;
+    return $piddle->nelem;
+}
+
+sub sum {
+    my $self = shift;
+    return $self->{sum};
+}
+
+#  do we need to cache this?  Or even need it?
+sub sumsq {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return;
+    my $sq = $piddle ** 2;
+    return $sq->sum;
+}
+
+sub min {
+    my $self = shift;
+    return $self->{min};
+}
+
+sub max {
+    my $self = shift;
+    return $self->{max};
+}
+
+sub mean {
+    my $self = shift;
+    return $self->{mean};
+}
+
+sub standard_deviation {
+    my $self = shift;
+    #return $self->{sd} if defined $self->{sd};  #  need to clear the cache before using this
+
+    my $piddle = $self->_get_piddle
+      // return undef;
+    my $sd;
+    my $n = $piddle->nelem;
+    if ($n > 1) {
+        $sd = $piddle->stdv_unbiased->sclr;
+        #$sd *= ($n / ($n - 1));
+    }
+    elsif ($n == 1){
+        $sd = 0;
+    }
+    return $sd;
+}
+
+sub variance {
+    my $self = shift;
+    return $self->{sd} ** 2;
+}
+
+sub median {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle->nelem ? $piddle->median : undef;
+}
+
+
+sub skewness {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    
+    my $n = $piddle->nelem;
+
+    return undef if $n < 3;
+    
+    return $piddle->skew_unbiased;
+
+    my $mean = $self->mean;
+    my $sd   = $self->standard_deviation;
+
+    my $pow3 = (($piddle - $mean) / $sd) ** 3;
+    say $pow3;
+    my $sum_pow3 = $pow3->sum;
+    my $correction = $n / ( ($n-1) * ($n-2) );
+
+    return $correction * $sum_pow3;
+}
+
+sub kurtosis {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle->nelem > 3 ? $piddle->kurt_unbiased->sclr : undef;
+}
+
+
+sub harmonic_mean {
+    return undef;
+}
+
+sub least_squares_fit {
+    return;
+}
 
 
 1;
