@@ -89,13 +89,13 @@ sub sum {
 }
 
 #  do we need to cache this?  Or even need it?
-sub sumsq {
-    my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return;
-    my $sq = $piddle ** 2;
-    return $sq->sum;
-}
+#sub sumsq {
+#    my $self = shift;
+#    my $piddle = $self->_get_piddle
+#      // return;
+#    my $sq = $piddle ** 2;
+#    return $sq->sum;
+#}
 
 sub min {
     my $self = shift;
@@ -250,7 +250,8 @@ __END__
 
 =head1 NAME
 
-Statistics::Descriptive::PDL - The great new Statistics::Descriptive::PDL!
+Statistics::Descriptive::PDL - A close to drop-in replacement for
+Statistics::Descriptive using PDL as the back-end
 
 =head1 VERSION
 
@@ -260,31 +261,95 @@ Version 0.01
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
 
     use Statistics::Descriptive::PDL;
 
-    my $foo = Statistics::Descriptive::PDL->new();
-    ...
+    my $stats = Statistics::Descriptive::PDL->new();
+    $stats->add_data(1,2,3,4);
+    my $mean = $stat->mean;
+    my $var  = $stat->variance();
+    
+=head1 DESCRIPTION
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 SUBROUTINES/METHODS
-
-=head2 function1
-
-=cut
+This module provides basic functions used in descriptive statistics.
 
 
-=head2 function2
+=head1 METHODS
 
-=cut
+=item new
 
+Create a new statistics object.  Takes no arguments.  
+
+=item add_data (@data)
+
+=item add_data (\@data)
+
+Add data to the stats object.  Passed through to the underlying PDL object.
+Appends to any existing data.
+
+Results for multidimensional data are currently undefined,
+but such data will be flattened in future.
+
+=item geometric_mean
+
+=item harmonic_mean
+
+=item max
+
+=item mean
+
+=item median
+
+=item min
+
+=item mode
+
+=item sample_range
+
+=item standard_deviation
+
+=item sum
+
+=item variance
+
+The above should need no explanation, except that they
+use the unbiased methods where appropriate, as per Statistics::Descriptive.
+
+=item count
+
+Number of data items that have been added.
+ 
+
+=item skewness
+
+=item kurtosis
+
+Skewness and kurtosis to match that of MS Excel.
+If you are used to R then these are the same as type=2
+in e1071::skewness and e1071::kurtosis.
+
+
+=item percentile (10)
+
+=item percentile (45)
+
+The percentile calculation differs from Statistics::Descriptive in that it uses
+linear interpolation to determine the values, and does not
+return the exact same values as the input data.
+
+=head2 Not yet implemented, and possibly won't be.
+
+Any of the trimmed functions, frequency functions and some others.
+
+=item least_squares_fit
+
+=item trimmed_mean
+
+=item quantile
+
+=item mindex
+
+=item maxdex
 
 =head1 AUTHOR
 
