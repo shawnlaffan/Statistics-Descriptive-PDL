@@ -218,9 +218,8 @@ sub mode {
 
     return undef if !$count;
     my $mode = $piddle->mode;
-    if ($mode == 9805800) {
-        #  PDL seems to return 9805800 if there is nothing unique.
-        #  Not sure if it is always the case, though
+    if ($mode > $piddle->max) {
+        #  PDL returns strange numbers when distributions are flat
         $mode = undef;
     }
     return $mode;
