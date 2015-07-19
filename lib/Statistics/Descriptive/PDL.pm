@@ -172,9 +172,40 @@ sub kurtosis {
     return $piddle->nelem > 3 ? $piddle->kurt_unbiased->sclr : undef;
 }
 
+sub sample_range {
+    my $self = shift;
+    my $min = $self->min // return undef;
+    my $max = $self->max // return undef;
+    return $max - $min;
+}
+
 
 sub harmonic_mean {
-    return undef;
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+
+    return undef if $piddle->which->nelem != $piddle->nelem;
+
+    my $hs = (1 / $piddle)->sum;
+
+    return $hs ? $self->count / $hs : undef;
+}
+
+sub geometric_mean {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+
+    my $count = $self->count;
+
+    return undef if !$count;
+    return undef if $piddle->where($piddle < 0)->nelem;
+
+    my $exponent = 1 / $self->count();
+    my $powered = $piddle ** $exponent;
+
+    my $gm = $powered->dprodover;
 }
 
 sub least_squares_fit {

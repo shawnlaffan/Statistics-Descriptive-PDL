@@ -54,13 +54,20 @@ sub test_same_as_stats_descr_full {
     $object_pdl->add_data(@data);
     $object_sdf->add_data(@data);
 
-    my @methods = qw /mean standard_deviation median skewness kurtosis min max/;
+    my @methods = qw /
+        mean standard_deviation median
+        skewness kurtosis
+        min max
+        sample_range
+        harmonic_mean
+        geometric_mean
+    /;
+
     my $test_name
       = 'Methods match between Statistics::Descriptive::PDL and '
       . 'Statistics::Descriptive::Full';
     subtest $test_name => sub {
         foreach my $method (@methods) {
-            #diag $method;
             my $got = $object_pdl->$method;
             my $exp = $object_sdf->$method;
             is_between (
@@ -98,10 +105,6 @@ sub test_least_squares {
 }
 
 sub test_harmonic_mean {
-    local $TODO = 'Harmonic mean not implemented yet';
-    ok (0, $TODO);
-    return;
-
     # test #3
     # test error condition on harmonic mean : one element zero
     my $stat = $stats_class->new();
@@ -124,14 +127,14 @@ sub test_harmonic_mean {
 
     # test #5
     # test error condition on harmonic mean : sum of elements near zero
-    $stat = $stats_class->new();
-    local $Statistics::Descriptive::PDL::Tolerance = 0.1;
-    $stat->add_data( 1.01, -1.0 );
-    $single_result = $stat->harmonic_mean();
-    # TEST
-    ok (! defined( $single_result ),
-        "test error condition on harmonic mean : sum of elements near zero"
-    );
+    #$stat = $stats_class->new();
+    #local $Statistics::Descriptive::PDL::Tolerance = 0.1;
+    #$stat->add_data( 1.01, -1.0 );
+    #$single_result = $stat->harmonic_mean();
+    ## TEST
+    #ok (! defined( $single_result ),
+    #    "test error condition on harmonic mean : sum of elements near zero"
+    #);
 
     # test #6
     # test normal function of harmonic mean
@@ -285,6 +288,7 @@ sub test_trimmed_mean {
     );
 }
 
+#  relict from Stats::Descr - prob not needed
 sub test_negative_variance {
     my $stat = $stats_class->new();
 
@@ -461,12 +465,13 @@ sub test_stats_when_no_data_added {
     #  or one to get all the stats methods
     my @methods = qw {
         mean sum variance standard_deviation
-        min mindex max maxdex sample_range
+        min max sample_range
         skewness kurtosis median
         harmonic_mean geometric_mean
         mode percentile 
     };
     # frequency_distribution least_squares_fit
+    #  mindex maxdex
     #  least_squares_fit is handled in an earlier test, so is actually a duplicate here
 
     #diag 'Results are undef when no data added';
@@ -549,7 +554,7 @@ sub test_data_with_samples {
 #  Tests for mindex and maxdex on unsorted data,
 #  including when new data are added which should not change the values
 sub test_mindex_maxdex {
-    local $TODO = 'mindex and maxdex not yet implemented';
+    local $TODO = 'mindex and maxdex not yet implemented, and might never be';
     return;
 
     my $stat1 = $stats_class->new();
@@ -572,11 +577,13 @@ sub test_mindex_maxdex {
     is ($stat1->maxdex, $e_maxdex, "maxdex is correct after new data added");
 
     # TEST*2
-    $stat1->median;  #  trigger a sort
-    $e_maxdex = scalar @data1 + scalar @data2 - 1;
-    is ($stat1->mindex, 0, "mindex is correct after sorting");
-    is ($stat1->maxdex, $e_maxdex, "maxdex is correct after sorting");
-
+    {
+        local $TODO = 'Sorting not implemneted yet, so skip mindex/maxdex after median';
+        $stat1->median;  #  trigger a sort
+        $e_maxdex = scalar @data1 + scalar @data2 - 1;
+        is ($stat1->mindex, 0, "mindex is correct after sorting");
+        is ($stat1->maxdex, $e_maxdex, "maxdex is correct after sorting");
+    }
 }
 
 
