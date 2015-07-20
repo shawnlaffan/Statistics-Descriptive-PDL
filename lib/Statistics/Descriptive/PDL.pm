@@ -35,17 +35,14 @@ sub add_data {
     }
     
     return if !scalar @$data;
-    
-    my $piddle;    
-    my $count = $self->count;
 
-    #  $count is modified lower down, but we need this flag after that
-    my $has_existing_data = $count;
+    my $piddle;
+    my $has_existing_data = $self->count;
 
     # Take care of appending to an existing data set
     if ($has_existing_data) {
         $piddle = $self->_get_piddle;
-        $piddle = $piddle->append (pdl ($data));
+        $piddle = $piddle->append (pdl ($data)->flat);
         $self->_set_piddle ($piddle);
     }
     else {
@@ -53,22 +50,13 @@ sub add_data {
         $piddle = $self->_get_piddle;
     }
 
-    # probably inefficient, as we often only want some of these,
-    #my ($mean, $prms, $median, $min, $max, $adev, $rms) = $self->_get_piddle->statsover;
-    $self->{mean}   = $piddle->average->sclr;
-    $self->{sum}    = $piddle->sum;
-    $self->{sd}     = $self->standard_deviation;
-    $self->{median} = $piddle->median;
-    $self->{min}    = $piddle->min;
-    $self->{max}    = $piddle->max;
-
     return $self->count;
 }
 
-#  need to croak if $data is multidimensional, or perhaps just flatten it out
+#  flatten $data if multidimensional
 sub _set_piddle {
     my ($self, $data) = @_;
-    $self->{piddle} = pdl $data;
+    $self->{piddle} = pdl ($data)->flat;
 }
 
 sub _get_piddle {
@@ -85,7 +73,9 @@ sub count {
 
 sub sum {
     my $self = shift;
-    return $self->{sum};
+    my $piddle = $self->_get_piddle
+      // return;
+    return $piddle->nelem ? $piddle->sum : undef;
 }
 
 #  do we need to cache this?  Or even need it?
@@ -99,18 +89,25 @@ sub sum {
 
 sub min {
     my $self = shift;
-    return $self->{min};
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle->nelem ? $piddle->min : undef;
 }
 
 sub max {
     my $self = shift;
-    return $self->{max};
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle->nelem ? $piddle->max : undef;
 }
 
 sub mean {
     my $self = shift;
-    return $self->{mean};
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle->nelem ? $piddle->average : undef;
 }
+
 
 sub standard_deviation {
     my $self = shift;
@@ -122,7 +119,6 @@ sub standard_deviation {
     my $n = $piddle->nelem;
     if ($n > 1) {
         $sd = $piddle->stdv_unbiased->sclr;
-        #$sd *= ($n / ($n - 1));
     }
     elsif ($n == 1){
         $sd = 0;
@@ -154,16 +150,6 @@ sub skewness {
     return undef if $n < 3;
     
     return $piddle->skew_unbiased;
-
-    my $mean = $self->mean;
-    my $sd   = $self->standard_deviation;
-
-    my $pow3 = (($piddle - $mean) / $sd) ** 3;
-    say $pow3;
-    my $sum_pow3 = $pow3->sum;
-    my $correction = $n / ( ($n-1) * ($n-2) );
-
-    return $correction * $sum_pow3;
 }
 
 sub kurtosis {
@@ -287,8 +273,7 @@ Create a new statistics object.  Takes no arguments.
 Add data to the stats object.  Passed through to the underlying PDL object.
 Appends to any existing data.
 
-Results for multidimensional data are currently undefined,
-but such data will be flattened in future.
+Multidimensional data are flattened into a singe dimensional array.
 
 =item geometric_mean
 
