@@ -8,6 +8,10 @@ use warnings;
 use PDL::Lite '2.012';
 use PDL::Stats::Basic;
 
+#  We could inherit from PDL::Objects, but in this case we want
+#  to hide the piddle from the caller to avoid arbitrary changes
+#  being applied to it. 
+
 our $VERSION = '0.01';
 
 our $Tolerance = 0.0;  #  for compatibility with Stats::Descr, but not used here
@@ -46,8 +50,7 @@ sub add_data {
         $self->_set_piddle ($piddle);
     }
     else {
-        $self->_set_piddle ($data);
-        $piddle = $self->_get_piddle;
+        $self->_set_piddle (pdl($data)->flat);
     }
 
     return $self->count;
@@ -56,7 +59,7 @@ sub add_data {
 #  flatten $data if multidimensional
 sub _set_piddle {
     my ($self, $data) = @_;
-    $self->{piddle} = pdl ($data)->flat;
+    $self->{piddle} = pdl ($data);
 }
 
 sub _get_piddle {
@@ -78,14 +81,6 @@ sub sum {
     return $piddle->nelem ? $piddle->sum : undef;
 }
 
-#  do we need to cache this?  Or even need it?
-#sub sumsq {
-#    my $self = shift;
-#    my $piddle = $self->_get_piddle
-#      // return;
-#    my $sq = $piddle ** 2;
-#    return $sq->sum;
-#}
 
 sub min {
     my $self = shift;
@@ -111,7 +106,6 @@ sub mean {
 
 sub standard_deviation {
     my $self = shift;
-    #return $self->{sd} if defined $self->{sd};  #  need to clear the cache before using this
 
     my $piddle = $self->_get_piddle
       // return undef;
