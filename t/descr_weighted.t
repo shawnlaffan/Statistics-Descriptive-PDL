@@ -53,7 +53,7 @@ sub test_equal_weights {
     my $object_pdl = $stats_class->new;
     #  "well behaved" data so medians and percentiles are not interpolated
     my @data = (0..100);  
-    $object_pdl->add_data(\@data, [(1) x scalar @data]);
+    $object_pdl->add_data(\@data, [(0.6) x scalar @data]);
     my $piddle = ($object_pdl->_get_piddle);
     $piddle = $piddle(,0);
 
@@ -96,6 +96,19 @@ sub test_equal_weights {
 
 }
 
+sub test_mode {
+    my $object = $stats_class->new;
+    
+    my @data = (1..10, 5, 5, 2, 3, 2, 3, 5);
+    $object->add_data(\@data, [(1) x scalar @data]);
+    
+    my $sd = $object->standard_deviation;
+    is ($object->mode, 5, 'Mode is 5');
+    
+    is ($object->standard_deviation, $sd, "SD unchanged by deduplication in ->mode");
+
+}
+
 sub test_same_as_stats_descr_full {
     my $object_pdl = $stats_class->new;
     my $object_sdf = Statistics::Descriptive::Full->new;
@@ -115,11 +128,11 @@ sub test_same_as_stats_descr_full {
     /;
 
     my $test_name
-      = 'Methods match between Statistics::Descriptive::PDL and '
+      = 'Methods match between Statistics::Descriptive::PDL::Weighted and '
       . 'Statistics::Descriptive::Full';
     subtest $test_name => sub {
         foreach my $method (@methods) {
-            diag "$method\n";
+            #diag "$method\n";
             my $got = $object_pdl->$method;
             my $exp = $object_sdf->$method;
             is_between (
@@ -315,28 +328,6 @@ sub test_percentiles {
     );
 }
 
-#  do we want this?
-sub test_trimmed_mean {
-    local $TODO = 'Not sure we want the trimmed mean';
-    return;
-
-    # tests #12 and #13
-    # Check correct parsing of method parameters
-    my $stat = $stats_class->new();
-    $stat->add_data([1,2,3,4,5,6,7,8,9,10], [(1)x10]);
-    # TEST
-    is(
-        $stat->trimmed_mean(0.1,0.1),
-        $stat->trimmed_mean(0.1),
-        "correct parsing of method parameters",
-    );
-
-    # TEST
-    is ($stat->trimmed_mean(0.1,0),
-        6,
-        "correct parsing of method parameters - 2",
-    );
-}
 
 #  relict from Stats::Descr - prob not needed
 sub test_negative_variance {

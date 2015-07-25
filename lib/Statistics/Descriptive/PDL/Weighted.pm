@@ -86,42 +86,48 @@ sub sum {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle(,0)->nelem ? ($piddle(,0) * $piddle(,1))->sum : undef;
+    return undef if $piddle(,0)->isempty;
+    return ($piddle(,0) * $piddle(,1))->sum;
 }
 
 sub sum_weights {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle(,0)->nelem ? $piddle(,1)->sum : undef;
+    return undef if $piddle(,0)->isempty;
+    return $piddle(,1)->sum;
 }
 
 sub min {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle(,0)->nelem ? $piddle(,0)->min : undef;
+    return undef if $piddle(,0)->isempty;
+    return $piddle(,0)->min;
 }
 
 sub max {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle(,0)->nelem ? $piddle(,0)->max : undef;
+    return undef if $piddle(,0)->isempty;
+    return $piddle(,0)->max;
 }
 
 sub min_weight {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle(,0)->nelem ? $piddle(,1)->min : undef;
+    return undef if $piddle(,0)->isempty;
+    return $piddle(,1)->min;
 }
 
 sub max_weight {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle(,1)->nelem ? $piddle(,1)->max : undef;
+    return undef if $piddle(,1)->isempty;
+    return $piddle(,1)->max;
 }
 
 sub mean {
@@ -129,9 +135,9 @@ sub mean {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    return $piddle(,0)->nelem
-      ? ($piddle(,0) * $piddle(,1))->sum / $piddle(,1)->sum  # should cache the sum of wts
-      : undef;
+    return undef if $piddle->isempty;
+    # should cache the sum of wts
+    return ($piddle(,0) * $piddle(,1))->sum / $piddle(,1)->sum;
 }
 
 
@@ -165,7 +171,7 @@ sub median {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return undef if !$piddle->nelem;
+    return undef if $piddle->isempty;
 
     $piddle = $self->_sort_piddle;
     my $cumsum = $self->{cumsum_weight_vector};
@@ -174,8 +180,7 @@ sub median {
     #my $idx = ($cumsum <= $target_wt)->which->max;
     #  vsearch should be faster since it uses a binary search
     my $idx = $cumsum->reshape->vsearch_insert_leftmost($target_wt)->which->min;  
-say $cumsum;
-say $piddle;
+
     return $piddle($idx,0)->sclr;
 }
 
@@ -183,9 +188,9 @@ sub _sort_piddle {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    
+
     return $piddle if $self->{sorted};
-    
+
     my $s = $piddle(,0)->qsorti->reshape;
     my $sorted = $piddle($s,);
     $self->_set_piddle($sorted);
@@ -206,15 +211,13 @@ sub skewness {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    my $skew;
-    my $n = $piddle(,0)->nelem;
-    if ($n > 0) {
-        #  long winded approach
-        my $mean = $self->mean;
-        my $sd   = $self->standard_deviation;
-        my $sumpow3 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 3))->sum;
-        $skew = $sumpow3 / $self->sum_weights;
-    }
+    return undef if $piddle(,0)->isempty;
+
+    #  long winded approach
+    my $mean = $self->mean;
+    my $sd   = $self->standard_deviation;
+    my $sumpow3 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 3))->sum;
+    my $skew = $sumpow3 / $self->sum_weights;
     return $skew;
 }
 
@@ -222,15 +225,13 @@ sub kurtosis {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    my $kurt;
-    my $n = $piddle(,0)->nelem;
-    if ($n > 0) {
-        #  long winded approach
-        my $mean = $self->mean;
-        my $sd   = $self->standard_deviation;
-        my $sumpow4 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 4))->sum;
-        $kurt = $sumpow4 / $self->sum_weights - 3;
-    }
+    return undef if $piddle(,0)->isempty;
+
+    #  long winded approach
+    my $mean = $self->mean;
+    my $sd   = $self->standard_deviation;
+    my $sumpow4 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 4))->sum;
+    my $kurt = $sumpow4 / $self->sum_weights - 3;
     return $kurt;
 }
 
@@ -247,9 +248,9 @@ sub harmonic_mean {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    return undef if $piddle->which->nelem != $piddle->nelem;
+    return undef if $piddle(,0)->which->nelem != $piddle(,0)->nelem;
 
-    my $hs = (1 / $piddle)->sum;
+    my $hs = ((1 / $piddle(,0)) * $piddle(,1))->sum;
 
     return $hs ? $self->count / $hs : undef;
 }
@@ -259,15 +260,14 @@ sub geometric_mean {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    my $count = $self->count;
+    return undef if $piddle(,0)->isempty;
+    return undef if $piddle(,0)->where($piddle(,0) < 0)->nelem;
 
-    return undef if !$count;
-    return undef if $piddle->where($piddle < 0)->nelem;
+    my $exponent = 1 / $self->sum_weights;
+    my $powered = $piddle(,0) * $piddle(,1);
 
-    my $exponent = 1 / $self->count();
-    my $powered = $piddle(,0) ** $exponent;
-
-    my $gm = $powered->dprodover;
+    my $gm = $powered->dprodover ** $exponent;
+    return $gm;
 }
 
 sub mode {
@@ -275,11 +275,40 @@ sub mode {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    my $count = $self->count;
+    return undef if $piddle->isempty;
 
-    return undef if !$count;
-    my $mode = $piddle->mode;
-    if ($mode > $piddle->max) {
+    #  de-duplicate if needed, aggregating weights
+    my $unique = $piddle(,0)->uniq;
+    if ($unique->nelem != $piddle(,0)->nelem) {
+        $piddle = $self->_sort_piddle;
+
+        my (@data, @wts);
+        
+        push @data, $piddle(0,0)->sclr;
+        push @wts,  $piddle(0,1)->sclr;
+        my $last_val = $data[0];
+
+        #  could use a map into a hash, but this avoids
+        #  stringification and loss of precision
+        #  (not that that should cause too many issues for most data)
+        #  Should be able to use ->setops for this process to reduce looping
+        #  when there are not many dups in large data sets
+        foreach my $i (1..$piddle(,0)->nelem-1) {
+            if ($piddle($i,0) == $last_val) {
+                $wts[-1] += $piddle($i,1)->sclr;
+            }
+            else {
+                push @data, $piddle($i,0)->sclr;
+                push @wts,  $piddle($i,1)->sclr;
+                $last_val = $data[-1];
+            }
+        }
+        $piddle = pdl (\@data, \@wts);
+        $self->_set_piddle($piddle);
+    }
+
+    my $mode = $piddle($piddle(,1)->maximum_ind,0)->sclr;
+    if ($mode > $piddle(,0)->max) {
         #  PDL returns strange numbers when distributions are flat
         $mode = undef;
     }
@@ -292,9 +321,7 @@ sub percentile {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    my $count = $piddle->nelem;
-    
-    return undef if !$count;
+    return undef if $piddle->isempty;
     return $piddle->pct($p / 100);
 }
 
