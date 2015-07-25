@@ -10,10 +10,10 @@ use lib 't/lib';
 use Utils qw/is_between compare_hash_by_ranges/;
 
 use Benchmark;
-use Statistics::Descriptive::PDL;
+use Statistics::Descriptive::PDL::Weighted;
 use Statistics::Descriptive;
 
-my $stats_class = 'Statistics::Descriptive::PDL';
+my $stats_class = 'Statistics::Descriptive::PDL::Weighted';
 my $tolerance = 1E-13;
 
 use Devel::Symdump;
@@ -45,13 +45,63 @@ sub main {
     return 0;
 }
 
+sub test_equal_weights {
+    use PDL::NiceSlice;
+    use PDL::Stats;
+    use Scalar::Util qw /blessed/;
+    
+    my $object_pdl = $stats_class->new;
+    #  "well behaved" data so medians and percentiles are not interpolated
+    my @data = (0..100);  
+    $object_pdl->add_data(\@data, [(1) x scalar @data]);
+    my $piddle = ($object_pdl->_get_piddle);
+    $piddle = $piddle(,0);
+
+    my @methods = qw /
+        mean
+        standard_deviation
+        skewness
+        kurtosis
+        min
+        max
+        median
+    /;
+
+    my %method_remap = (
+        mean     => 'avg',
+        skewness => 'skew',
+        kurtosis => 'kurt',
+        standard_deviation => 'stdv',
+    );
+
+    my $test_name
+      = 'Methods match between Statistics::Descriptive::PDL and '
+      . 'PDL::Stats when weights are all 1';
+    subtest $test_name => sub {
+        foreach my $method (@methods) {
+            #diag "$method\n";
+            my $PDL_method = $method_remap{$method} // $method;
+
+            #  allow for precision differences
+            my $got = $object_pdl->$method;
+            my $exp = $piddle->$PDL_method;
+            is_between (
+                $got,
+                $exp - $tolerance,
+                $exp + $tolerance,
+                "$method got $got, expected $exp",
+            );
+        }
+    };
+
+}
 
 sub test_same_as_stats_descr_full {
     my $object_pdl = $stats_class->new;
     my $object_sdf = Statistics::Descriptive::Full->new;
 
     my @data = (1..100, 5, 5);
-    $object_pdl->add_data(@data);
+    $object_pdl->add_data(\@data, [(1) x scalar @data]);
     $object_sdf->add_data(@data);
 
     my @methods = qw /
@@ -69,13 +119,14 @@ sub test_same_as_stats_descr_full {
       . 'Statistics::Descriptive::Full';
     subtest $test_name => sub {
         foreach my $method (@methods) {
+            diag "$method\n";
             my $got = $object_pdl->$method;
             my $exp = $object_sdf->$method;
             is_between (
                 $got,
                 $exp - $tolerance,
                 $exp + $tolerance,
-                $method,
+                "$method got $got, expected $exp",
             );
         }
     };
@@ -96,7 +147,7 @@ sub test_least_squares {
     # test #2
     # data are y = 2*x - 1
 
-    $stat->add_data( 1, 3, 5, 7 );
+    $stat->add_data( [1, 3, 5, 7], [(1) x  4]);
     @results = $stat->least_squares_fit();
     # TEST
     is_deeply (
@@ -110,7 +161,7 @@ sub test_harmonic_mean {
     # test #3
     # test error condition on harmonic mean : one element zero
     my $stat = $stats_class->new();
-    $stat->add_data( 1.1, 2.9, 4.9, 0.0 );
+    $stat->add_data( [1.1, 2.9, 4.9, 0.0], [(1)x4] );
     my $single_result = $stat->harmonic_mean();
     # TEST
     ok (!defined($single_result),
@@ -120,7 +171,7 @@ sub test_harmonic_mean {
     # test #4
     # test error condition on harmonic mean : sum of elements zero
     $stat = $stats_class->new();
-    $stat->add_data( 1.0, -1.0 );
+    $stat->add_data( [1.0, -1.0], [1, 1] );
     $single_result = $stat->harmonic_mean();
     # TEST
     ok (!defined($single_result),
@@ -141,7 +192,7 @@ sub test_harmonic_mean {
     # test #6
     # test normal function of harmonic mean
     $stat = $stats_class->new();
-    $stat->add_data( 1,2,3 );
+    $stat->add_data( [1,2,3], [1,1,1] );
     $single_result = $stat->harmonic_mean();
     # TEST
     ok (scalar(abs( $single_result - 1.6363 ) < 0.001),
@@ -158,10 +209,7 @@ sub test_frequency_distribution {
     # test #7
     # test stringification of hash keys in frequency distribution
     my $stat = $stats_class->new();
-    $stat->add_data(0.1,
-                    0.15,
-                    0.16,
-                   1/3);
+    $stat->add_data([0.1, 0.15, 0.16, 1/3], [(1)x4]);
     my %f = $stat->frequency_distribution(2);
 
     # TEST
@@ -185,16 +233,11 @@ sub test_frequency_distribution {
     # test the frequency distribution with specified bins
     $stat = $stats_class->new();
     my @freq_bins=(20,40,60,80,100);
-    $stat->add_data(23.92,
-                    32.30,
-                    15.27,
-                    39.89,
-                    8.96,
-                    40.71,
-                    16.20,
-                    34.61,
-                    27.98,
-                    74.40);
+    $stat->add_data(
+        [23.92, 32.30, 15.27, 39.89, 8.96,
+         40.71, 16.20, 34.61, 27.98, 74.40],
+         [(1)x10]
+    );
     %f = $stat->frequency_distribution(\@freq_bins);
 
     # TEST
@@ -217,16 +260,9 @@ sub test_frequency_distribution {
     @freq_bins = (20,40,60,80,100);
 
     $stat->add_data(
-        23.92,
-        32.30,
-        15.27,
-        39.89,
-        8.96,
-        40.71,
-        16.20,
-        34.61,
-        27.98,
-        74.40,
+        [23.92, 32.30, 15.27, 39.89, 8.96,
+         40.71, 16.20, 34.61, 27.98, 74.40],
+         [(1)x10],
     );
 
     my $f_d = $stat->frequency_distribution_ref(\@freq_bins);
@@ -252,7 +288,7 @@ sub test_percentiles {
     # test #10 and #11
     # Test the percentile function and caching
     my $stat = $stats_class->new();
-    $stat->add_data(-5,-2,4,7,7,18);
+    $stat->add_data([-5,-2,4,7,7,18],[(1)x6]);
     ##Check algorithm
     # TEST
     is ($stat->percentile(50),
@@ -265,7 +301,7 @@ sub test_percentiles {
         "percentile function and caching - 2",
     );
     $stat = $stats_class->new();
-    $stat->add_data(0..100);
+    $stat->add_data([0..100], [(1)x101]);
     ##Check algorithm
     # TEST
     is ($stat->percentile(50),
@@ -287,7 +323,7 @@ sub test_trimmed_mean {
     # tests #12 and #13
     # Check correct parsing of method parameters
     my $stat = $stats_class->new();
-    $stat->add_data(1,2,3,4,5,6,7,8,9,10);
+    $stat->add_data([1,2,3,4,5,6,7,8,9,10], [(1)x10]);
     # TEST
     is(
         $stat->trimmed_mean(0.1,0.1),
@@ -306,7 +342,7 @@ sub test_trimmed_mean {
 sub test_negative_variance {
     my $stat = $stats_class->new();
 
-    $stat->add_data((0.001) x 6);
+    $stat->add_data([(0.001) x 6], [(1)x6]);
 
     # TEST
     is_between ($stat->variance(),
@@ -326,7 +362,7 @@ sub test_negative_variance {
 sub test_basics {
     my $stat = $stats_class->new();
 
-    $stat->add_data(1, 2, 3, 5);
+    $stat->add_data([1, 2, 3, 5], [1,1,1,1]);
 
     # TEST
     is ($stat->count(),
@@ -359,7 +395,7 @@ sub test_geometric_mean {
     # test the frequency distribution with specified bins
     my $stat = $stats_class->new();
 
-    $stat->add_data(2, 4, 8);
+    $stat->add_data([2, 4, 8], [1,1,1]);
 
     # TEST
     is_between(
@@ -374,7 +410,7 @@ sub test_skew_kurt {
     my $stat = $stats_class->new();
     my ($expected, $got);
 
-    $stat->add_data(1 .. 9, 100);
+    $stat->add_data([1 .. 9, 100], [(1)x10]);
 
     # TEST
     $expected = 3.11889574523909;
@@ -394,7 +430,7 @@ sub test_skew_kurt {
         "Kurtosis of $expected +/- 1E-13"
     );
 
-    $stat->add_data(100 .. 110);
+    $stat->add_data([100 .. 110], [(1)x11]);
 
     #  now check that cached skew and kurt values are recalculated
 
@@ -419,7 +455,7 @@ sub test_skew_kurt {
     #  reset
     $stat = $stats_class->new();
 
-    $stat->add_data(1,2);
+    $stat->add_data([1,2], [1,1]);
     my $def;
 
     # TEST
@@ -429,7 +465,7 @@ sub test_skew_kurt {
         'Skewness is undef for 2 samples'
     );
 
-    $stat->add_data (1);
+    $stat->add_data ({1 => 1});
 
     # TEST
     $def = defined $stat->kurtosis() ? 1 : 0;
@@ -467,7 +503,7 @@ sub test_stats_when_no_data_added {
         min max sample_range
         skewness kurtosis median
         harmonic_mean geometric_mean
-        mode sum
+        mode 
     };
     #  percentile 
     # frequency_distribution least_squares_fit
@@ -501,7 +537,7 @@ sub test_stats_when_no_data_added {
 #  test SD when only one value added
 sub test_sd_of_one_val_is_undef {
     my $stat = $stats_class->new();
-    $stat->add_data( 1 );
+    $stat->add_data( {1 => 1} );
 
     my $result = $stat->standard_deviation();
     # TEST
@@ -605,16 +641,16 @@ sub test_add_new_data {
     #  sample of methods
     my @methods = qw /mean standard_deviation count skewness kurtosis median/;
 
-    $stat1->add_data(@data1);     # initialise
+    $stat1->add_data(\@data1, [(1) x scalar @data1]);     # initialise
     foreach my $meth (@methods) { #  run some methods
         $stat1->$meth;
     }
-    $stat1->add_data(@data2);     #  add new data
+    $stat1->add_data(\@data2, [(1) x scalar @data2]);     #  add new data
     foreach my $meth (@methods) { #  re-run some methods
         $obj1{$meth} = $stat1->$meth;
     }
 
-    $stat2->add_data(@data1, @data2);  #  initialise with all data
+    $stat2->add_data([@data1, @data2], [(1) x (scalar @data1 + scalar @data2)]);  #  initialise with all data
     foreach my $meth (@methods) { #  run some methods
         $obj2{$meth} = $stat2->$meth;
     }

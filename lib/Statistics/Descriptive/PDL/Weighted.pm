@@ -1,10 +1,13 @@
-package Statistics::Descriptive::PDL;
+package Statistics::Descriptive::PDL::Weighted;
 
 use 5.010;
 use strict;
 use warnings;
 
+#use parent qw/ Statistics::Descriptive::PDL /;
+
 #  avoid loading too much, especially into our name space
+use PDL::NiceSlice;
 use PDL::Lite '2.012';
 use PDL::Stats::Basic;
 
@@ -13,8 +16,6 @@ use PDL::Stats::Basic;
 #  being applied to it. 
 
 our $VERSION = '0.01';
-
-our $Tolerance = 0.0;  #  for compatibility with Stats::Descr, but not used here
 
 sub new {
     my $proto = shift;
@@ -28,35 +29,42 @@ sub new {
 
 
 sub add_data {
-    my $self = shift;
-    my $data;
+    my ($self, $data, $weights) = @_;
 
-    if (ref $_[0] eq 'ARRAY') {
-        $data = $_[0];
+    my ($data_pdl, $weights_pdl);
+
+    if (ref $data eq 'HASH') {
+        $data_pdl    = pdl ([keys %$data])->flat;
+        $weights_pdl = pdl ([values %$data])->flat;
     }
     else {
-        $data = \@_;
+        die "data and weight vectors not of same length"
+          if scalar @$data != scalar @$weights;
+        $data_pdl = pdl ($data)->flat;
+        $weights_pdl = pdl ($weights)->flat;
     }
-    
-    return if !scalar @$data;
 
-    my $piddle;
+    return if !$data_pdl(,0)->nelem;
+
     my $has_existing_data = $self->count;
+
+    my $new_piddle = pdl($data_pdl, $weights_pdl);
 
     # Take care of appending to an existing data set
     if ($has_existing_data) {
-        $piddle = $self->_get_piddle;
-        $piddle = $piddle->append (pdl ($data)->flat);
+        my $piddle = $self->_get_piddle;
+        $piddle = $piddle->append ($new_piddle);
         $self->_set_piddle ($piddle);
+        delete $self->{cumsum_weight_vector};
+        delete $self->{sorted};
     }
     else {
-        $self->_set_piddle (pdl($data)->flat);
+        $self->_set_piddle ($new_piddle);
     }
 
     return $self->count;
 }
 
-#  flatten $data if multidimensional
 sub _set_piddle {
     my ($self, $data) = @_;
     $self->{piddle} = pdl ($data);
@@ -71,36 +79,59 @@ sub count {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return 0;
-    return $piddle->nelem;
+    return $piddle(,1)->sum;
 }
 
 sub sum {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem ? $piddle->sum : undef;
+    return $piddle(,0)->nelem ? ($piddle(,0) * $piddle(,1))->sum : undef;
 }
 
+sub sum_weights {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle(,0)->nelem ? $piddle(,1)->sum : undef;
+}
 
 sub min {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem ? $piddle->min : undef;
+    return $piddle(,0)->nelem ? $piddle(,0)->min : undef;
 }
 
 sub max {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem ? $piddle->max : undef;
+    return $piddle(,0)->nelem ? $piddle(,0)->max : undef;
+}
+
+sub min_weight {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle(,0)->nelem ? $piddle(,1)->min : undef;
+}
+
+sub max_weight {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    return $piddle(,1)->nelem ? $piddle(,1)->max : undef;
 }
 
 sub mean {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem ? $piddle->average : undef;
+
+    return $piddle(,0)->nelem
+      ? ($piddle(,0) * $piddle(,1))->sum / $piddle(,1)->sum  # should cache the sum of wts
+      : undef;
 }
 
 
@@ -110,9 +141,13 @@ sub standard_deviation {
     my $piddle = $self->_get_piddle
       // return undef;
     my $sd;
-    my $n = $piddle->nelem;
+    my $n = $piddle(,0)->nelem;
     if ($n > 1) {
-        $sd = $piddle->stdv_unbiased->sclr;
+        #  long winded approach
+        my $mean = $self->mean;
+        my $sumsqr = ($piddle(,1) * (($piddle(,0) - $mean) ** 2))->sum;
+        my $var = $sumsqr / $self->sum_weights;
+        $sd = sqrt $var;
     }
     elsif ($n == 1){
         $sd = 0;
@@ -130,27 +165,73 @@ sub median {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem ? $piddle->median : undef;
+    return undef if !$piddle->nelem;
+
+    $piddle = $self->_sort_piddle;
+    my $cumsum = $self->{cumsum_weight_vector};
+
+    my $target_wt = $self->sum_weights * 0.5;
+    #my $idx = ($cumsum <= $target_wt)->which->max;
+    #  vsearch should be faster since it uses a binary search
+    my $idx = $cumsum->reshape->vsearch_insert_leftmost($target_wt)->which->min;  
+say $cumsum;
+say $piddle;
+    return $piddle($idx,0)->sclr;
 }
 
+sub _sort_piddle {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+    
+    return $piddle if $self->{sorted};
+    
+    my $s = $piddle(,0)->qsorti->reshape;
+    my $sorted = $piddle($s,);
+    $self->_set_piddle($sorted);
+    $self->{sorted} = 1;
+    my $cum_sum = $sorted(,1)->cumusumover->reshape;  #  need to cache this
+    $self->{cumsum_weight_vector} = $cum_sum;
+    
+    return $sorted;    
+}
+
+sub _get_cumsum_weight_vector {
+    my $self = shift;
+    return $self->{cumsum_weight_vector};
+}
 
 sub skewness {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    
-    my $n = $piddle->nelem;
 
-    return undef if $n < 3;
-    
-    return $piddle->skew_unbiased;
+    my $skew;
+    my $n = $piddle(,0)->nelem;
+    if ($n > 0) {
+        #  long winded approach
+        my $mean = $self->mean;
+        my $sd   = $self->standard_deviation;
+        my $sumpow3 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 3))->sum;
+        $skew = $sumpow3 / $self->sum_weights;
+    }
+    return $skew;
 }
 
 sub kurtosis {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem > 3 ? $piddle->kurt_unbiased->sclr : undef;
+    my $kurt;
+    my $n = $piddle(,0)->nelem;
+    if ($n > 0) {
+        #  long winded approach
+        my $mean = $self->mean;
+        my $sd   = $self->standard_deviation;
+        my $sumpow4 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 4))->sum;
+        $kurt = $sumpow4 / $self->sum_weights - 3;
+    }
+    return $kurt;
 }
 
 sub sample_range {
@@ -184,7 +265,7 @@ sub geometric_mean {
     return undef if $piddle->where($piddle < 0)->nelem;
 
     my $exponent = 1 / $self->count();
-    my $powered = $piddle ** $exponent;
+    my $powered = $piddle(,0) ** $exponent;
 
     my $gm = $powered->dprodover;
 }
@@ -242,16 +323,26 @@ Version 0.01
 =head1 SYNOPSIS
 
 
-    use Statistics::Descriptive::PDL;
+    use Statistics::Descriptive::PDL::Weighted;
 
-    my $stats = Statistics::Descriptive::PDL->new();
-    $stats->add_data(1,2,3,4);
+    my $stats = Statistics::Descriptive::PDL::Weighted->new;
+    $stats->add_data([1,2,3,4], [1,3,5,6]);  #  values then weights
     my $mean = $stat->mean;
-    my $var  = $stat->variance();
+    my $var  = $stat->variance;
+    
+    #  or you can add data using a hash ref
+    my %data = (1 => 1, 2 => 3, 3 => 5, 4 => 6);
+    $stats->add_data(\%data);
+    
+    #  if you want equal weights then you need to supply them yourself
+    my $data = [1,2,3,4];
+    $stats->add_data($data, [(1) x scalar @$data]);
+    
     
 =head1 DESCRIPTION
 
-This module provides basic functions used in descriptive statistics.
+This module provides basic functions used in descriptive statistics
+using weighted values.  
 
 
 =head1 METHODS
@@ -260,14 +351,24 @@ This module provides basic functions used in descriptive statistics.
 
 Create a new statistics object.  Takes no arguments.  
 
-=item add_data (@data)
+=item add_data (\%data)
 
-=item add_data (\@data)
+=item add_data ([1,2,3,4], [0.5,1,0.1,2)
 
-Add data to the stats object.  Passed through to the underlying PDL object.
-Appends to any existing data.
+Add data to the stats object.  Appends to any existing data.
+
+If a hash reference is passed then the keys are treated as the numeric data values,
+with the hash values the weights.
+
+Unlike Statistics::Descriptive::PDL, you cannot pass a flat array
+since odd things might happen if we convert it to a hash and the values
+are multidimensional.
 
 Multidimensional data are flattened into a singe dimensional array.
+
+Since we use the pdl function to process the data and weights you should be able to
+specify anything pdl accepts as valid, but take care that the number of
+weights matches the values.
 
 =item geometric_mean
 
@@ -296,7 +397,9 @@ use the unbiased methods where appropriate, as per Statistics::Descriptive.
 
 =item count
 
-Number of data items that have been added.
+=item sum_wts
+
+Sum of the weights vector.
  
 
 =item skewness
@@ -312,9 +415,10 @@ in e1071::skewness and e1071::kurtosis.
 
 =item percentile (45)
 
-The percentile calculation differs from Statistics::Descriptive in that it uses
-linear interpolation to determine the values, and does not
-return the exact same values as the input data.
+The percentile calculation differs from Statistics::Descriptive
+and Statistics::Descriptive::PDL.
+
+TODO:  Explain how it differs
 
 =head2 Not yet implemented, and possibly won't be.
 
@@ -338,6 +442,7 @@ Shawn Laffan, C<< <shawnlaffan at gmail.com> >>
 
 Please report any bugs or feature requests to
 C<https://github.com/shawnlaffan/Statistics-Descriptive-PDL/issues>.
+
 
 
 =head1 ACKNOWLEDGEMENTS
