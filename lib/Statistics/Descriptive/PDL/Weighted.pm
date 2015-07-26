@@ -122,13 +122,6 @@ sub min_weight {
     return $piddle(,1)->min;
 }
 
-sub max_weight {
-    my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return undef if $piddle(,1)->isempty;
-    return $piddle(,1)->max;
-}
 
 sub mean {
     my $self = shift;
@@ -199,6 +192,43 @@ sub _sort_piddle {
     $self->{cumsum_weight_vector} = $cum_sum;
     
     return $sorted;    
+}
+
+#  de-duplicate if needed, aggregating weights
+sub _deduplicate_piddle {
+    my $self = shift;
+    my $piddle = $self->_get_piddle
+      // return undef;
+
+    my $unique = $piddle(,0)->uniq;
+    if ($unique->nelem != $piddle(,0)->nelem) {
+        $piddle = $self->_sort_piddle;
+
+        my (@data, @wts);
+        
+        push @data, $piddle(0,0)->sclr;
+        push @wts,  $piddle(0,1)->sclr;
+        my $last_val = $data[0];
+
+        #  could use a map into a hash, but this avoids
+        #  stringification and loss of precision
+        #  (not that that should cause too many issues for most data)
+        #  Should be able to use ->setops for this process to reduce looping
+        #  when there are not many dups in large data sets
+        foreach my $i (1..$piddle(,0)->nelem-1) {
+            if ($piddle($i,0) == $last_val) {
+                $wts[-1] += $piddle($i,1)->sclr;
+            }
+            else {
+                push @data, $piddle($i,0)->sclr;
+                push @wts,  $piddle($i,1)->sclr;
+                $last_val = $data[-1];
+            }
+        }
+        $piddle = pdl (\@data, \@wts);
+        $self->_set_piddle($piddle);
+    }
+    return $piddle;
 }
 
 sub _get_cumsum_weight_vector {
@@ -277,35 +307,8 @@ sub mode {
 
     return undef if $piddle->isempty;
 
-    #  de-duplicate if needed, aggregating weights
-    my $unique = $piddle(,0)->uniq;
-    if ($unique->nelem != $piddle(,0)->nelem) {
-        $piddle = $self->_sort_piddle;
-
-        my (@data, @wts);
-        
-        push @data, $piddle(0,0)->sclr;
-        push @wts,  $piddle(0,1)->sclr;
-        my $last_val = $data[0];
-
-        #  could use a map into a hash, but this avoids
-        #  stringification and loss of precision
-        #  (not that that should cause too many issues for most data)
-        #  Should be able to use ->setops for this process to reduce looping
-        #  when there are not many dups in large data sets
-        foreach my $i (1..$piddle(,0)->nelem-1) {
-            if ($piddle($i,0) == $last_val) {
-                $wts[-1] += $piddle($i,1)->sclr;
-            }
-            else {
-                push @data, $piddle($i,0)->sclr;
-                push @wts,  $piddle($i,1)->sclr;
-                $last_val = $data[-1];
-            }
-        }
-        $piddle = pdl (\@data, \@wts);
-        $self->_set_piddle($piddle);
-    }
+    #  de-duplicate and aggregate weights if needed
+    $piddle = $self->_deduplicate_piddle;
 
     my $mode = $piddle($piddle(,1)->maximum_ind,0)->sclr;
     if ($mode > $piddle(,0)->max) {
@@ -322,7 +325,15 @@ sub percentile {
       // return undef;
 
     return undef if $piddle->isempty;
-    return $piddle->pct($p / 100);
+
+    $piddle = $self->_sort_piddle;
+    my $cumsum = $self->{cumsum_weight_vector};
+
+    my $target_wt = $self->sum_weights * ($p / 100);
+
+    my $idx = $cumsum->reshape->vsearch_insert_leftmost($target_wt)->which->min;  
+
+    return $piddle($idx,0)->sclr;
 }
 
 #  place holders

@@ -118,7 +118,7 @@ sub test_same_as_stats_descr_full {
     $object_sdf->add_data(@data);
 
     my @methods = qw /
-        mean standard_deviation median
+        mean standard_deviation
         skewness kurtosis
         min max
         sample_range
