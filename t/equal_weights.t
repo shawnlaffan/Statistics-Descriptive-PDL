@@ -24,7 +24,7 @@ use Scalar::Util qw /blessed/;
 
 
 my $stats_class = 'Statistics::Descriptive::PDL::Weighted';
-my $tolerance = 1E-13;
+my $tolerance = 1E-10;
 
 test_equal_weights();
 

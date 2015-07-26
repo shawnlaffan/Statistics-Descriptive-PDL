@@ -9,7 +9,8 @@ use warnings;
 #  avoid loading too much, especially into our name space
 use PDL::NiceSlice;
 use PDL::Lite '2.012';
-use PDL::Stats::Basic;
+eval 'require PDL::Stats::Basic';
+my $has_PDL_stats_basic = $@ ? 1 : undef;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
