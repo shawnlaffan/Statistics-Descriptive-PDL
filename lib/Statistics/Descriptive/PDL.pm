@@ -6,9 +6,8 @@ use warnings;
 
 #  avoid loading too much, especially into our name space
 use PDL::Lite '2.012';
-BEGIN {
-    my $has_PDL_stats_basic = eval 'use PDL::Stats::Basic';
-}
+my $has_PDL_stats_basic = eval 'require PDL::Stats::Basic';
+#$has_PDL_stats_basic = 0;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
@@ -118,8 +117,8 @@ sub standard_deviation {
             $sd = $piddle->stdv_unbiased->sclr;
         }
         else {
-            $sd = ($piddle * 2)->sum - $n * $self->mean ** 2);
-            $sd *= ($n / ($n - 1));
+            my $var = (($piddle ** 2)->sum - $n * $self->mean ** 2)->sclr;
+            $sd = $var > 0 ? sqrt ($var / ($n - 1)) : 0;
         }
     }
     elsif ($n == 1){
