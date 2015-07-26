@@ -21,7 +21,7 @@ WriteMakefile(
     PREREQ_PM => {
         #  PDL:: versions should be able to go lower, but need to start somewhere
         "PDL"        => "2.012",
-        "PDL::Stats" => "0.6.5_2",
+        #"PDL::Stats" => "0.6.5_2",  #  need to make this a recommended module as 0.6.5 has install issues
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Statistics-Descriptive-PDL-*' },
