@@ -9,12 +9,6 @@ use rlib;
 use lib 't/lib';
 use Utils qw/is_between compare_hash_by_ranges/;
 
-eval 'require PDL::Stats';
-if ($@) {
-    plan skip_all => 'PDL::Stats not installed';
-}
-
-
 use Statistics::Descriptive::PDL::Weighted;
 use Statistics::Descriptive;
 
