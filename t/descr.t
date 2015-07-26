@@ -9,7 +9,6 @@ use rlib;
 use lib 't/lib';
 use Utils qw/is_between compare_hash_by_ranges/;
 
-use Benchmark;
 use Statistics::Descriptive::PDL;
 use Statistics::Descriptive;
 

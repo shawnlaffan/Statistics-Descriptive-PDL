@@ -6,7 +6,8 @@ use warnings;
 
 #  avoid loading too much, especially into our name space
 use PDL::Lite '2.012';
-my $has_PDL_stats_basic = eval 'require PDL::Stats::Basic';
+eval 'require PDL::Stats::Basic';
+my $has_PDL_stats_basic = $@ ? 1 : undef;
 #$has_PDL_stats_basic = 0;
 
 #  We could inherit from PDL::Objects, but in this case we want

@@ -9,7 +9,6 @@ use rlib;
 use lib 't/lib';
 use Utils qw/is_between compare_hash_by_ranges/;
 
-use Benchmark;
 use Statistics::Descriptive::PDL::Weighted;
 use Statistics::Descriptive;
 
@@ -45,56 +44,6 @@ sub main {
     return 0;
 }
 
-sub test_equal_weights {
-    use PDL::NiceSlice;
-    use PDL::Stats;
-    use Scalar::Util qw /blessed/;
-    
-    my $object_pdl = $stats_class->new;
-    #  "well behaved" data so medians and percentiles are not interpolated
-    my @data = (0..100);  
-    $object_pdl->add_data(\@data, [(0.6) x scalar @data]);
-    my $piddle = ($object_pdl->_get_piddle);
-    $piddle = $piddle(,0);
-
-    my @methods = qw /
-        mean
-        standard_deviation
-        skewness
-        kurtosis
-        min
-        max
-        median
-    /;
-
-    my %method_remap = (
-        mean     => 'avg',
-        skewness => 'skew',
-        kurtosis => 'kurt',
-        standard_deviation => 'stdv',
-    );
-
-    my $test_name
-      = 'Methods match between Statistics::Descriptive::PDL and '
-      . 'PDL::Stats when weights are all 1';
-    subtest $test_name => sub {
-        foreach my $method (@methods) {
-            #diag "$method\n";
-            my $PDL_method = $method_remap{$method} // $method;
-
-            #  allow for precision differences
-            my $got = $object_pdl->$method;
-            my $exp = $piddle->$PDL_method;
-            is_between (
-                $got,
-                $exp - $tolerance,
-                $exp + $tolerance,
-                "$method got $got, expected $exp",
-            );
-        }
-    };
-
-}
 
 sub test_mode {
     my $object = $stats_class->new;
