@@ -151,15 +151,42 @@ sub skewness {
     my $n = $piddle->nelem;
 
     return undef if $n < 3;
-    
-    return $piddle->skew_unbiased;
+
+    return $piddle->skew_unbiased
+      if $has_PDL_stats_basic;
+
+    #  do it ourselves
+    my $mean = $self->mean;
+    my $sd   = $self->standard_deviation;
+    my $sumpow3 = ((($piddle - $mean) / $sd) ** 3)->sum;
+    my $correction = $n / ( ($n-1) * ($n-2) );
+    my $skew = $correction * $sumpow3;
+
+    return $skew;
 }
 
 sub kurtosis {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    return $piddle->nelem > 3 ? $piddle->kurt_unbiased->sclr : undef;
+
+    my $n = $piddle->nelem;
+
+    return undef if $n < 4;
+    
+    return $piddle->kurt_unbiased->sclr 
+      if $has_PDL_stats_basic;
+
+    #  do it ourselves
+    my $mean = $self->mean;
+    my $sd   = $self->standard_deviation;
+    my $sumpow4 = ((($piddle - $mean) / $sd) ** 4)->sum;
+
+    my $correction1 = ( $n * ($n+1) ) / ( ($n-1) * ($n-2) * ($n-3) );
+    my $correction2 = ( 3  * ($n-1) ** 2) / ( ($n-2) * ($n-3) );
+
+    my $kurt = ( $correction1 * $sumpow4 ) - $correction2;
+    return $kurt;
 }
 
 sub sample_range {
@@ -207,7 +234,7 @@ sub mode {
 
     return undef if !$count;
     my $mode = $piddle->mode;
-    if ($mode > $piddle->max) {
+    if ($mode > $piddle->max || $mode < $piddle->min) {
         #  PDL returns strange numbers when distributions are flat
         $mode = undef;
     }
