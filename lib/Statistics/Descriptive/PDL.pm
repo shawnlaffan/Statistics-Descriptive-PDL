@@ -230,14 +230,25 @@ sub mode {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    my $count = $self->count;
+    my $count = $piddle->nelem;
 
     return undef if !$count;
-    my $mode = $piddle->mode;
-    if ($mode > $piddle->max || $mode < $piddle->min) {
-        #  PDL returns strange numbers when distributions are flat
-        $mode = undef;
+    
+    my $unique = $piddle->uniq;
+
+    return undef if $unique->nelem == $count || $unique->nelem == 1;
+
+    if (!($count % $unique->nelem)) {
+        #  might have equal numbers of each value
+        #  need to check for this, but for now return undef
+        return undef;
     }
+
+    my $mode = $piddle->mode;
+    
+    #  bodge to handle odd values
+    return undef if !$piddle->in($mode)->max;
+    
     return $mode;
 }
 
