@@ -15,16 +15,12 @@ use Statistics::Descriptive::PDL;
     my $mode = $stat->mode();
 
     # TEST
-    ok (!defined($mode),
-        "No mode for a flat distribution."
-    );
+    is ($mode, undef, "No mode for a flat distribution");
 
     my $second_mode = $stat->mode();
 
     # TEST
-    ok (!defined($second_mode),
-        "No mode after a second call."
-    );
+    is ($second_mode, undef, "No mode after a second call");
 }
 
 {
