@@ -16,7 +16,7 @@ my $has_PDL_stats_basic = $@ ? 1 : undef;
 #  to hide the piddle from the caller to avoid arbitrary changes
 #  being applied to it. 
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub new {
     my $proto = shift;
@@ -355,7 +355,7 @@ Statistics::Descriptive using PDL as the back-end
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 

@@ -26,7 +26,7 @@ use Statistics::Descriptive::PDL;
 {
     my $stat = Statistics::Descriptive::PDL->new();
 
-    $stat->add_data( 1, 5,5,5,10,19,19,30  );
+    $stat->add_data( 1, 5, 5, 5, 10, 19, 19, 30 );
 
     my $mode = $stat->mode();
 

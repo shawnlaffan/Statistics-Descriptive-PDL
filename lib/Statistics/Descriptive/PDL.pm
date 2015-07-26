@@ -15,7 +15,7 @@ my $has_PDL_stats_basic = $@ ? undef : 1;
 #  to hide the piddle from the caller to avoid arbitrary changes
 #  being applied to it. 
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 our $Tolerance = 0.0;  #  for compatibility with Stats::Descr, but not used here
 
@@ -230,19 +230,18 @@ sub mode {
     my $piddle = $self->_get_piddle
       // return undef;
 
-    my $count = $piddle->nelem;
-
-    return undef if !$count;
+    return undef if $piddle->isempty;
     
+    my $count  = $piddle->nelem;
     my $unique = $piddle->uniq;
 
     return undef if $unique->nelem == $count || $unique->nelem == 1;
 
-    if (!($count % $unique->nelem)) {
-        #  might have equal numbers of each value
-        #  need to check for this, but for now return undef
-        return undef;
-    }
+    #if (!($count % $unique->nelem)) {
+    #    #  might have equal numbers of each value
+    #    #  need to check for this, but for now return undef
+    #    return undef;
+    #}
 
     my $mode = $piddle->mode;
     
@@ -282,7 +281,7 @@ Statistics::Descriptive using PDL as the back-end
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
