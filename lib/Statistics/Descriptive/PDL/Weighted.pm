@@ -4,13 +4,9 @@ use 5.010;
 use strict;
 use warnings;
 
-#use parent qw/ Statistics::Descriptive::PDL /;
-
 #  avoid loading too much, especially into our name space
 use PDL::NiceSlice;
 use PDL::Lite '2.012';
-eval 'require PDL::Stats::Basic';
-my $has_PDL_stats_basic = $@ ? 1 : undef;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
@@ -168,7 +164,7 @@ sub median {
     return undef if $piddle->isempty;
 
     $piddle = $self->_sort_piddle;
-    my $cumsum = $self->{cumsum_weight_vector};
+    my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * 0.5;
     #my $idx = ($cumsum <= $target_wt)->which->max;
