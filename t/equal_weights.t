@@ -15,7 +15,7 @@ use Statistics::Descriptive;
 use PDL::Lite;
 use PDL::NiceSlice;
 #use PDL::Stats;
-eval 'require PDL::Stats';
+eval 'use PDL::Stats';
 if ($@) {
     plan skip_all => 'PDL::Stats not installed';
 }
