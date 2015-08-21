@@ -167,9 +167,8 @@ sub median {
     my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * 0.5;
-    #my $idx = ($cumsum <= $target_wt)->which->max;
     #  vsearch should be faster since it uses a binary search
-    my $idx = $cumsum->reshape->vsearch_insert_leftmost($target_wt)->which->min;  
+    my $idx = pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
     return $piddle($idx,0)->sclr;
 }
@@ -328,7 +327,7 @@ sub percentile {
 
     my $target_wt = $self->sum_weights * ($p / 100);
 
-    my $idx = $cumsum->reshape->vsearch_insert_leftmost($target_wt)->which->min;  
+    my $idx = pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
 
     return $piddle($idx,0)->sclr;
 }
