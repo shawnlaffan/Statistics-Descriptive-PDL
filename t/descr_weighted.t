@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-
+use 5.010;
 use strict;
 use warnings;
 
@@ -7,7 +6,7 @@ use Test::More;
 
 use rlib;
 use lib 't/lib';
-use Utils qw/is_between compare_hash_by_ranges/;
+use Utils qw/is_between/;
 
 use Statistics::Descriptive::PDL::Weighted;
 use Statistics::Descriptive;
@@ -18,6 +17,9 @@ my $tolerance = 1E-13;
 use Devel::Symdump;
 my $obj = Devel::Symdump->rnew(__PACKAGE__); 
 my @subs = grep {$_ =~ 'main::test_'} $obj->functions();
+
+#my @xsubs = grep {$_ =~ 'pdl'} $obj->functions();
+#print sort join "\n", @xsubs;
 
 exit main( @ARGV );
 

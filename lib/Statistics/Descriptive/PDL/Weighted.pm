@@ -5,8 +5,12 @@ use strict;
 use warnings;
 
 #  avoid loading too much, especially into our name space
-use PDL::NiceSlice;
 use PDL::Lite '2.012';
+#use PDL;
+use PDL::NiceSlice;
+
+#  this is otherwise not loaded due to oddities with multiple loading of PDL::Lite
+*pdl = \&PDL::Core::pdl;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
@@ -287,6 +291,7 @@ sub geometric_mean {
       // return undef;
 
     return undef if $piddle(,0)->isempty;
+    #  should add a sorted status check, as we can use vsearch in such cases
     return undef if $piddle(,0)->where($piddle(,0) < 0)->nelem;
 
     my $exponent = 1 / $self->sum_weights;
@@ -314,7 +319,7 @@ sub mode {
     return $mode;
 }
 
-#  need to convert $p to fraction, or perhaps die if it is betwen 0 and 1
+#  need to convert $p to fraction, or perhaps die if it is between 0 and 1
 sub percentile {
     my ($self, $p) = @_;
     my $piddle = $self->_get_piddle
@@ -323,13 +328,61 @@ sub percentile {
     return undef if $piddle->isempty;
 
     $piddle = $self->_sort_piddle;
-    my $cumsum = $self->{cumsum_weight_vector};
+    my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * ($p / 100);
 
     my $idx = pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
 
     return $piddle($idx,0)->sclr;
+}
+
+#  Use interpolation after adjusting weights to be integers.
+#  Makes most sense if one is trying to replicate results
+#  between unweighted and weighted
+#  when the weights are all values of 1,
+#  but who are we to stop people doing other things?
+#  Uses same algorithm as PDL::pctl.
+sub percentile_interpolated {
+    my ($self, $p, $multiplier) = @_;
+    my $piddle = $self->_get_piddle
+      // return undef;
+
+    return undef if $piddle->isempty;
+
+    $piddle = $self->_deduplicate_piddle;
+
+    my $wt_piddle = $piddle(,1);
+    if ($multiplier) {
+        $wt_piddle *= $multiplier;
+    }
+    my $floored_wts = $wt_piddle->floor;
+    my $cumsum = $floored_wts->cumusumover->reshape;
+    my $wt_sum = $floored_wts->sum;
+
+    use POSIX qw /floor/;
+
+    my $target_wt = ($p / 100) * ($wt_sum - 1) + 1;
+    my $k = floor $target_wt;
+    my $d = $target_wt - $k;
+
+    my $idx = pdl($k)->vsearch_insert_leftmost($cumsum)->sclr;
+
+    #  we need to interpolate if our target weight falls between two sets of weights
+    #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
+    my $fraction = ($target_wt - $cumsum($idx))->sclr;
+    if ($fraction < 1) {
+        my $lower_val = $piddle($idx,0)->sclr;
+        my $upper_val = $piddle($idx+1,0)->sclr;
+        my $val = $lower_val + $d * ($upper_val - $lower_val);
+        return $val;
+    }
+
+    return $piddle($idx,0)->sclr;
+}
+
+sub median_interpolated {
+    return $_[0]->percentile_interpolated (50, $_[1]);
 }
 
 #  place holders
