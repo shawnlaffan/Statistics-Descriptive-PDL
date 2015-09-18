@@ -10,7 +10,7 @@ use PDL::Lite '2.012';
 use PDL::NiceSlice;
 
 #  this is otherwise not loaded due to oddities with multiple loading of PDL::Lite
-*pdl = \&PDL::Core::pdl;
+#*pdl = \&PDL::Core::pdl;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
@@ -35,21 +35,21 @@ sub add_data {
     my ($data_pdl, $weights_pdl);
 
     if (ref $data eq 'HASH') {
-        $data_pdl    = pdl ([keys %$data])->flat;
-        $weights_pdl = pdl ([values %$data])->flat;
+        $data_pdl    = PDL->pdl ([keys %$data])->flat;
+        $weights_pdl = PDL->pdl ([values %$data])->flat;
     }
     else {
         die "data and weight vectors not of same length"
           if scalar @$data != scalar @$weights;
-        $data_pdl = pdl ($data)->flat;
-        $weights_pdl = pdl ($weights)->flat;
+        $data_pdl    = PDL->pdl ($data)->flat;
+        $weights_pdl = PDL->pdl ($weights)->flat;
     }
 
     return if !$data_pdl(,0)->nelem;
 
     my $has_existing_data = $self->count;
 
-    my $new_piddle = pdl($data_pdl, $weights_pdl);
+    my $new_piddle = PDL->pdl($data_pdl, $weights_pdl);
 
     # Take care of appending to an existing data set
     if ($has_existing_data) {
@@ -68,7 +68,7 @@ sub add_data {
 
 sub _set_piddle {
     my ($self, $data) = @_;
-    $self->{piddle} = pdl ($data);
+    $self->{piddle} = PDL->pdl ($data);
 }
 
 sub _get_piddle {
@@ -172,7 +172,7 @@ sub median {
 
     my $target_wt = $self->sum_weights * 0.5;
     #  vsearch should be faster since it uses a binary search
-    my $idx = pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
+    my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
     return $piddle($idx,0)->sclr;
 }
@@ -225,7 +225,7 @@ sub _deduplicate_piddle {
                 $last_val = $data[-1];
             }
         }
-        $piddle = pdl (\@data, \@wts);
+        $piddle = PDL->pdl (\@data, \@wts);
         $self->_set_piddle($piddle);
     }
     return $piddle;
@@ -332,7 +332,7 @@ sub percentile {
 
     my $target_wt = $self->sum_weights * ($p / 100);
 
-    my $idx = pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
+    my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
 
     return $piddle($idx,0)->sclr;
 }
@@ -366,7 +366,7 @@ sub percentile_interpolated {
     my $k = floor $target_wt;
     my $d = $target_wt - $k;
 
-    my $idx = pdl($k)->vsearch_insert_leftmost($cumsum)->sclr;
+    my $idx = PDL->pdl($k)->vsearch_insert_leftmost($cumsum)->sclr;
 
     #  we need to interpolate if our target weight falls between two sets of weights
     #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]

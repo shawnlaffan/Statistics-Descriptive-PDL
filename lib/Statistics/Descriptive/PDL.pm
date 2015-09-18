@@ -13,7 +13,7 @@ my $has_PDL_stats_basic = $@ ? undef : 1;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
-#  being applied to it. 
+#  being applied to it.
 
 our $VERSION = '0.02';
 
@@ -40,7 +40,7 @@ sub add_data {
     else {
         $data = \@_;
     }
-    
+
     return if !scalar @$data;
 
     my $piddle;
@@ -49,11 +49,11 @@ sub add_data {
     # Take care of appending to an existing data set
     if ($has_existing_data) {
         $piddle = $self->_get_piddle;
-        $piddle = $piddle->append (pdl ($data)->flat);
+        $piddle = $piddle->append (PDL->pdl ($data)->flat);
         $self->_set_piddle ($piddle);
     }
     else {
-        $self->_set_piddle (pdl($data)->flat);
+        $self->_set_piddle (PDL->pdl($data)->flat);
     }
 
     return $self->count;
@@ -62,7 +62,7 @@ sub add_data {
 #  flatten $data if multidimensional
 sub _set_piddle {
     my ($self, $data) = @_;
-    $self->{piddle} = pdl ($data);
+    $self->{piddle} = PDL->pdl ($data);
 }
 
 sub _get_piddle {
@@ -147,7 +147,7 @@ sub skewness {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
-    
+
     my $n = $piddle->nelem;
 
     return undef if $n < 3;
@@ -173,7 +173,7 @@ sub kurtosis {
     my $n = $piddle->nelem;
 
     return undef if $n < 4;
-    
+
     return $piddle->kurt_unbiased->sclr 
       if $has_PDL_stats_basic;
 
@@ -294,7 +294,7 @@ Version 0.02
     $stats->add_data(1,2,3,4);
     my $mean = $stat->mean;
     my $var  = $stat->variance();
-    
+
 =head1 DESCRIPTION
 
 This module provides basic functions used in descriptive statistics.
@@ -304,7 +304,7 @@ This module provides basic functions used in descriptive statistics.
 
 =item new
 
-Create a new statistics object.  Takes no arguments.  
+Create a new statistics object.  Takes no arguments.
 
 =item add_data (@data)
 
@@ -343,7 +343,7 @@ use the unbiased methods where appropriate, as per Statistics::Descriptive.
 =item count
 
 Number of data items that have been added.
- 
+
 
 =item skewness
 
