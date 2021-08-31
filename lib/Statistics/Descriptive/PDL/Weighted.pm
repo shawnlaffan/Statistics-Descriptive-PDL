@@ -223,36 +223,39 @@ sub _deduplicate_piddle {
     my $piddle = $self->_get_data_piddle
       // return undef;
 
+    my $unique = $piddle->uniq;
+
+    return $self->_get_data_piddle
+     if $unique->nelem == $piddle->nelem;
+     
     my $wts_piddle = $self->_get_weights_piddle;
 
-    my $unique = $piddle->uniq;
-    if ($unique->nelem != $piddle->nelem) {
-        $piddle = $self->_sort_piddle;
+    $piddle = $self->_sort_piddle;
 
-        my (@data, @wts);
-        
-        push @data, $piddle(0)->sclr;
-        push @wts,  $wts_piddle(0)->sclr;
-        my $last_val = $data[0];
+    my (@data, @wts);
+    
+    push @data, $piddle(0)->sclr;
+    push @wts,  $wts_piddle(0)->sclr;
+    my $last_val = $data[0];
 
-        #  could use a map into a hash, but this avoids
-        #  stringification and loss of precision
-        #  (not that that should cause too many issues for most data)
-        #  Should be able to use ->setops for this process to reduce looping
-        #  when there are not many dups in large data sets
-        foreach my $i (1..$piddle(0)->nelem-1) {
-            if ($piddle($i) == $last_val) {
-                $wts[-1] += $wts_piddle($i)->sclr;
-            }
-            else {
-                push @data, $piddle($i)->sclr;
-                push @wts,  $piddle($i)->sclr;
-                $last_val = $data[-1];
-            }
+    #  could use a map into a hash, but this avoids
+    #  stringification and loss of precision
+    #  (not that that should cause too many issues for most data)
+    #  Should be able to use ->setops for this process to reduce looping
+    #  when there are not many dups in large data sets
+    foreach my $i (1..$piddle->nelem-1) {
+        if ($piddle($i) == $last_val) {
+            $wts[-1] += $wts_piddle($i)->sclr;
         }
-        $self->_set_data_piddle(\@data);
-        $self->_set_weights_piddle(\@wts);
+        else {
+            push @data, $piddle($i)->sclr;
+            push @wts,  $wts_piddle($i)->sclr;
+            $last_val = $data[-1];
+        }
     }
+    $self->_set_data_piddle(\@data);
+    $self->_set_weights_piddle(\@wts);
+
     return $self->_get_data_piddle;
 }
 
