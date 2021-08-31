@@ -34,120 +34,134 @@ sub _wt_type{PDL::double()}
 sub add_data {
     my ($self, $data, $weights) = @_;
 
-    my ($data_pdl, $weights_pdl);
+    my ($data_piddle, $weights_piddle);
 
     if (ref $data eq 'HASH') {
-        $data_pdl    = PDL->pdl ([keys %$data])->flat;
-        $weights_pdl = PDL->pdl ($self->_wt_type, [values %$data])->flat;
+        $data_piddle    = PDL->pdl ([keys %$data])->flat;
+        $weights_piddle = PDL->pdl ($self->_wt_type, [values %$data])->flat;
     }
     else {
         die "data and weight vectors not of same length"
           if scalar @$data != scalar @$weights;
-        $data_pdl    = PDL->pdl ($data)->flat;
-        $weights_pdl = PDL->pdl ($self->_wt_type, $weights)->flat;
+        $data_piddle    = PDL->pdl ($data)->flat;
+        $weights_piddle = PDL->pdl ($self->_wt_type, $weights)->flat;
     }
 
-    return if !$data_pdl(,0)->nelem;
+    return if !$data_piddle->nelem;
 
     my $has_existing_data = $self->count;
 
-    my $new_piddle = PDL->pdl($data_pdl, $weights_pdl);
-
     # Take care of appending to an existing data set
     if ($has_existing_data) {
-        my $piddle = $self->_get_piddle;
-        $piddle = $piddle->append ($new_piddle);
-        $self->_set_piddle ($piddle);
+        my $d_piddle = $self->_get_data_piddle;
+        $d_piddle    = $d_piddle->append ($data_piddle);
+        $self->_set_data_piddle ($d_piddle);
+        my $w_piddle = $self->_get_weights_piddle;
+        $w_piddle    = $w_piddle->append ($weights_piddle);
+        $self->_set_weights_piddle ($w_piddle);
+        
         delete $self->{cumsum_weight_vector};
         delete $self->{sorted};
     }
     else {
-        $self->_set_piddle ($new_piddle);
+        $self->_set_data_piddle ($data_piddle);
+        $self->_set_weights_piddle ($weights_piddle);
     }
 
     return $self->count;
 }
 
-sub _set_piddle {
+sub _set_data_piddle {
     my ($self, $data) = @_;
-    $self->{piddle} = PDL->pdl ($data);
+    $self->{data_piddle} = PDL->pdl ($data);
 }
 
-sub _get_piddle {
+sub _get_data_piddle {
     my $self = shift;
-    return $self->{piddle};
+    return $self->{data_piddle};
+}
+
+sub _set_weights_piddle {
+    my ($self, $data) = @_;
+    $self->{weights_piddle} = PDL->pdl ($data);
+}
+
+sub _get_weights_piddle {
+    my $self = shift;
+    return $self->{weights_piddle};
 }
 
 sub count {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_weights_piddle
       // return 0;
-    return $piddle(,1)->sum;
+    return $piddle->sum;
 }
 
 sub sum {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
-    return ($piddle(,0) * $piddle(,1))->sum;
+    return undef if $data->isempty;
+    return ($data * $self->_get_weights_piddle)->sum;
 }
 
 sub sum_weights {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_weights_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
-    return $piddle(,1)->sum;
+    return undef if $piddle->isempty;
+    return $piddle->sum;
 }
 
 sub min {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_data_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
-    return $piddle(,0)->min;
+    return undef if $piddle->isempty;
+    return $piddle->min;
 }
 
 sub max {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_data_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
-    return $piddle(,0)->max;
+    return undef if $piddle->isempty;
+    return $piddle->max;
 }
 
 sub min_weight {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_weights_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
-    return $piddle(,1)->min;
+    return undef if $piddle->isempty;
+    return $piddle->min;
 }
 
 
 sub mean {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle->isempty;
+    return undef if $data->isempty;
     # should cache the sum of wts
-    return ($piddle(,0) * $piddle(,1))->sum / $piddle(,1)->sum;
+    return ($data * $self->_get_weights_piddle)->sum / $data->sum;
 }
 
 
 sub standard_deviation {
     my $self = shift;
 
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
     my $sd;
-    my $n = $piddle(,0)->nelem;
+    my $n = $data->nelem;
     if ($n > 1) {
         #  long winded approach
+        my $wts  = $self->_get_weights_piddle;
         my $mean = $self->mean;
-        my $sumsqr = ($piddle(,1) * (($piddle(,0) - $mean) ** 2))->sum;
+        my $sumsqr = ($wts * (($data - $mean) ** 2))->sum;
         my $var = $sumsqr / $self->sum_weights;
         $sd = sqrt $var;
     }
@@ -165,51 +179,59 @@ sub variance {
 
 sub median {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
-    return undef if $piddle->isempty;
+    return undef if $data->isempty;
 
-    $piddle = $self->_sort_piddle;
+    $data = $self->_sort_piddle;
     my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * 0.5;
     #  vsearch should be faster since it uses a binary search
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
-    return $piddle($idx,0)->sclr;
+    return $data($idx)->sclr;
 }
 
 sub _sort_piddle {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return $piddle if $self->{sorted};
+    return $data if $self->{sorted};
 
-    my $s = $piddle(,0)->qsorti->reshape;
-    my $sorted = $piddle($s,);
-    $self->_set_piddle($sorted);
+    my $wts = $self->_get_weights_piddle;
+    my $s = $data->qsorti->reshape;
+    my $sorted_data = $data($s);
+    my $sorted_wts  = $wts($s);
+
+    $self->_set_data_piddle($sorted_data);
+    $self->_set_weights_piddle($sorted_wts);
+
     $self->{sorted} = 1;
-    my $cum_sum = $sorted(,1)->cumusumover->reshape;  #  need to cache this
-    $self->{cumsum_weight_vector} = $cum_sum;
-    
-    return $sorted;    
+    $self->{cumsum_weight_vector}
+      = $sorted_wts->cumusumover->reshape;  #  need to cache this
+
+    return $sorted_data;
 }
 
 #  de-duplicate if needed, aggregating weights
+#  there should be a sumover or which approach that will work better
 sub _deduplicate_piddle {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_data_piddle
       // return undef;
 
-    my $unique = $piddle(,0)->uniq;
-    if ($unique->nelem != $piddle(,0)->nelem) {
+    my $wts_piddle = $self->_get_weights_piddle;
+
+    my $unique = $piddle->uniq;
+    if ($unique->nelem != $piddle->nelem) {
         $piddle = $self->_sort_piddle;
 
         my (@data, @wts);
         
-        push @data, $piddle(0,0)->sclr;
-        push @wts,  $piddle(0,1)->sclr;
+        push @data, $piddle(0)->sclr;
+        push @wts,  $wts_piddle(0)->sclr;
         my $last_val = $data[0];
 
         #  could use a map into a hash, but this avoids
@@ -217,20 +239,20 @@ sub _deduplicate_piddle {
         #  (not that that should cause too many issues for most data)
         #  Should be able to use ->setops for this process to reduce looping
         #  when there are not many dups in large data sets
-        foreach my $i (1..$piddle(,0)->nelem-1) {
-            if ($piddle($i,0) == $last_val) {
-                $wts[-1] += $piddle($i,1)->sclr;
+        foreach my $i (1..$piddle(0)->nelem-1) {
+            if ($piddle($i) == $last_val) {
+                $wts[-1] += $wts_piddle($i)->sclr;
             }
             else {
-                push @data, $piddle($i,0)->sclr;
-                push @wts,  $piddle($i,1)->sclr;
+                push @data, $piddle($i)->sclr;
+                push @wts,  $piddle($i)->sclr;
                 $last_val = $data[-1];
             }
         }
-        $piddle = PDL->pdl (\@data, \@wts);
-        $self->_set_piddle($piddle);
+        $self->_set_data_piddle(\@data);
+        $self->_set_weights_piddle(\@wts);
     }
-    return $piddle;
+    return $self->_get_data_piddle;
 }
 
 sub _get_cumsum_weight_vector {
@@ -240,29 +262,31 @@ sub _get_cumsum_weight_vector {
 
 sub skewness {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle(,0)->isempty;
+    return undef if $data->isempty;
 
     #  long winded approach
     my $mean = $self->mean;
     my $sd   = $self->standard_deviation;
-    my $sumpow3 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 3))->sum;
+    my $wts = $self->_get_weights_piddle;
+    my $sumpow3 = ($wts * ((($data - $mean) / $sd) ** 3))->sum;
     my $skew = $sumpow3 / $self->sum_weights;
     return $skew;
 }
 
 sub kurtosis {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
+    return undef if $data->isempty;
 
     #  long winded approach
     my $mean = $self->mean;
     my $sd   = $self->standard_deviation;
-    my $sumpow4 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 4))->sum;
+    my $wts = $self->_get_weights_piddle;
+    my $sumpow4 = ($wts * ((($data - $mean) / $sd) ** 4))->sum;
     my $kurt = $sumpow4 / $self->sum_weights - 3;
     return $kurt;
 }
@@ -277,27 +301,31 @@ sub sample_range {
 
 sub harmonic_mean {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle(,0)->which->nelem != $piddle(,0)->nelem;
+    return undef if $data->which->nelem != $data->nelem;
 
-    my $hs = ((1 / $piddle(,0)) * $piddle(,1))->sum;
+    my $wts = $self->_get_weights_piddle;
+    
+    my $hs = ((1 / $data) * $wts)->sum;
 
     return $hs ? $self->count / $hs : undef;
 }
 
 sub geometric_mean {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle(,0)->isempty;
+    return undef if $data->isempty;
     #  should add a sorted status check, as we can use vsearch in such cases
-    return undef if $piddle(,0)->where($piddle(,0) < 0)->nelem;
+    return undef if $data->where($data < 0)->nelem;
+
+    my $wts = $self->_get_weights_piddle;
 
     my $exponent = 1 / $self->sum_weights;
-    my $powered = $piddle(,0) * $piddle(,1);
+    my $powered = $data * $wts;
 
     my $gm = $powered->dprodover ** $exponent;
     return $gm;
@@ -305,16 +333,17 @@ sub geometric_mean {
 
 sub mode {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle->isempty;
+    return undef if $data->isempty;
 
     #  de-duplicate and aggregate weights if needed
-    $piddle = $self->_deduplicate_piddle;
+    $data = $self->_deduplicate_piddle;
 
-    my $mode = $piddle($piddle(,1)->maximum_ind,0)->sclr;
-    if ($mode > $piddle(,0)->max) {
+    my $wts = $self->_get_weights_piddle;
+    my $mode = $data($wts->maximum_ind)->sclr;
+    if ($mode > $data->max) {
         #  PDL returns strange numbers when distributions are flat
         $mode = undef;
     }
@@ -324,20 +353,23 @@ sub mode {
 #  need to convert $p to fraction, or perhaps die if it is between 0 and 1
 sub percentile {
     my ($self, $p) = @_;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle->isempty;
+    return undef if $data->isempty;
 
-    $piddle = $self->_sort_piddle;
+    $data = $self->_sort_piddle;
     my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * ($p / 100);
 
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
 
-    return $piddle($idx,0)->sclr;
+    return $data($idx)->sclr;
 }
+
+sub percentile_interpolated {undef}
+sub median_interpolated {undef};
 
 #  Use interpolation after adjusting weights to be integers.
 #  Makes most sense if one is trying to replicate results
@@ -345,47 +377,47 @@ sub percentile {
 #  when the weights are all values of 1,
 #  but who are we to stop people doing other things?
 #  Uses same algorithm as PDL::pctl.
-sub percentile_interpolated {
-    my ($self, $p, $multiplier) = @_;
-    my $piddle = $self->_get_piddle
-      // return undef;
+#sub percentile_interpolated {
+#    my ($self, $p, $multiplier) = @_;
+#    my $piddle = $self->_get_data_piddle
+#      // return undef;
+#
+#    return undef if $piddle->isempty;
+#
+#    $piddle = $self->_deduplicate_piddle;
+#
+#    my $wt_piddle = $piddle(,1);
+#    if ($multiplier) {
+#        $wt_piddle *= $multiplier;
+#    }
+#    my $floored_wts = $wt_piddle->floor;
+#    my $cumsum = $floored_wts->cumusumover->reshape;
+#    my $wt_sum = $floored_wts->sum;
+#
+#    use POSIX qw /floor/;
+#
+#    my $target_wt = ($p / 100) * ($wt_sum - 1) + 1;
+#    my $k = floor $target_wt;
+#    my $d = $target_wt - $k;
+#
+#    my $idx = PDL->pdl($k)->vsearch_insert_leftmost($cumsum)->sclr;
+#
+#    #  we need to interpolate if our target weight falls between two sets of weights
+#    #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
+#    my $fraction = ($target_wt - $cumsum($idx))->sclr;
+#    if ($fraction < 1) {
+#        my $lower_val = $piddle($idx,0)->sclr;
+#        my $upper_val = $piddle($idx+1,0)->sclr;
+#        my $val = $lower_val + $d * ($upper_val - $lower_val);
+#        return $val;
+#    }
+#
+#    return $piddle($idx,0)->sclr;
+#}
 
-    return undef if $piddle->isempty;
-
-    $piddle = $self->_deduplicate_piddle;
-
-    my $wt_piddle = $piddle(,1);
-    if ($multiplier) {
-        $wt_piddle *= $multiplier;
-    }
-    my $floored_wts = $wt_piddle->floor;
-    my $cumsum = $floored_wts->cumusumover->reshape;
-    my $wt_sum = $floored_wts->sum;
-
-    use POSIX qw /floor/;
-
-    my $target_wt = ($p / 100) * ($wt_sum - 1) + 1;
-    my $k = floor $target_wt;
-    my $d = $target_wt - $k;
-
-    my $idx = PDL->pdl($k)->vsearch_insert_leftmost($cumsum)->sclr;
-
-    #  we need to interpolate if our target weight falls between two sets of weights
-    #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
-    my $fraction = ($target_wt - $cumsum($idx))->sclr;
-    if ($fraction < 1) {
-        my $lower_val = $piddle($idx,0)->sclr;
-        my $upper_val = $piddle($idx+1,0)->sclr;
-        my $val = $lower_val + $d * ($upper_val - $lower_val);
-        return $val;
-    }
-
-    return $piddle($idx,0)->sclr;
-}
-
-sub median_interpolated {
-    return $_[0]->percentile_interpolated (50, $_[1]);
-}
+#sub median_interpolated {
+#    return $_[0]->percentile_interpolated (50, $_[1]);
+#}
 
 #  place holders
 sub quantile {undef}
@@ -400,8 +432,8 @@ __END__
 
 =head1 NAME
 
-Statistics::Descriptive::PDL - A close to drop-in replacement for
-Statistics::Descriptive using PDL as the back-end
+Statistics::Descriptive::PDL::Weighted - A close to drop-in replacement for
+Statistics::Descriptive::Weighted using PDL as the back-end
 
 =head1 VERSION
 

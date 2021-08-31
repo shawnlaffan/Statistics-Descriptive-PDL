@@ -593,6 +593,8 @@ sub test_add_new_data {
     foreach my $meth (@methods) { #  run some methods
         $stat1->$meth;
     }
+    my $wt1a = $stat1->_get_weights_piddle->sum->sclr;
+
     $stat1->add_data(\@data2, [(1) x scalar @data2]);     #  add new data
     foreach my $meth (@methods) { #  re-run some methods
         $obj1{$meth} = $stat1->$meth;
@@ -603,6 +605,12 @@ sub test_add_new_data {
         $obj2{$meth} = $stat2->$meth;
     }
 
+    my $wt1 = $stat1->_get_weights_piddle;
+    my $wt2 = $stat2->_get_weights_piddle;
+    
+    diag "==== wt1a is $wt1a";
+    is $wt1->sum->sclr, $wt2->sum->sclr, 'sum of weights';
+    
     # TEST
     is_deeply (\%obj2, \%obj1, 'stats consistent after adding new data');
 
