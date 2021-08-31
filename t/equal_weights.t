@@ -65,10 +65,8 @@ sub test_equal_weights {
             #  allow for precision differences
             my $got = $object_pdl->$method;
             my $exp = $piddle->$PDL_method;
-            is_between (
-                $got,
-                $exp - $tolerance,
-                $exp + $tolerance,
+            ok (
+                abs ($got - $exp) < $tolerance,
                 "$method got $got, expected $exp",
             );
         }
