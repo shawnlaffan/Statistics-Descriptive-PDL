@@ -607,8 +607,7 @@ sub test_add_new_data {
 
     my $wt1 = $stat1->_get_weights_piddle;
     my $wt2 = $stat2->_get_weights_piddle;
-    
-    diag "==== wt1a is $wt1a";
+
     is $wt1->sum->sclr, $wt2->sum->sclr, 'sum of weights';
     
     # TEST
