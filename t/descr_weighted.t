@@ -615,3 +615,53 @@ sub test_add_new_data {
     is_deeply (\%obj2, \%obj1, 'stats consistent after adding new data');
 
 }
+
+sub test_add_new_data_non_unity_wts {
+    my $stat1 = $stats_class->new();
+    my $stat2 = $stats_class->new();
+    my $stat3 = $stats_class->new();
+
+    my @data1 = (1 .. 9, 100);
+    my @data2 = (100 .. 110);
+
+    my (%obj1, %obj2, %obj3);
+
+    #  sample of methods
+    my @methods = qw /mean standard_deviation count skewness kurtosis median/;
+
+    $stat1->add_data(\@data1, [(2) x scalar @data1]);     # initialise
+    foreach my $meth (@methods) { #  run some methods
+        $stat1->$meth;
+    }
+
+    $stat1->add_data(\@data2, [(1) x scalar @data2]);     #  add new data
+    foreach my $meth (@methods) { #  re-run some methods
+        $obj1{$meth} = $stat1->$meth;
+    }
+
+    $stat2->add_data([@data1, @data2], [(1) x (scalar @data1 + scalar @data2)]);
+    $stat2->add_data([@data1], [(1) x (scalar @data1)]);
+
+    $stat3->add_data([@data1, @data2], [(0.5) x (scalar @data1 + scalar @data2)]);
+    $stat3->add_data([@data1], [(0.5) x (scalar @data1)]);
+
+    
+    foreach my $meth (@methods) { #  run some methods
+        $obj2{$meth} = $stat2->$meth;
+        $obj3{$meth} = $stat3->$meth;
+    }
+
+    my $wt1 = $stat1->_get_weights_piddle;
+    my $wt2 = $stat2->_get_weights_piddle;
+    
+    is $wt1->sum->sclr, $wt2->sum->sclr, 'sum of weights';
+    
+    # TEST
+    is_deeply (\%obj2, \%obj1, 'stats consistent after adding new data with doubled wts');
+    
+    {
+        delete local $obj1{count};
+        delete local $obj3{count};
+        is_deeply (\%obj3, \%obj1, 'stats consistent after adding new data with non-integer wts');
+    }
+}
