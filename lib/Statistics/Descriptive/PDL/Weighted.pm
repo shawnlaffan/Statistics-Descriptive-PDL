@@ -146,7 +146,8 @@ sub mean {
 
     return undef if $data->isempty;
     # should cache the sum of wts
-    return ($data * $self->_get_weights_piddle)->sum / $data->sum;
+    my $wts = $self->_get_weights_piddle;
+    return ($data * $wts)->sum / $wts->sum;
 }
 
 
