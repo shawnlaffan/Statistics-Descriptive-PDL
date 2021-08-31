@@ -1,5 +1,8 @@
 version: 1.0.{build}
 
+cache:
+  - C:\Strawberry
+
 install:
   - cinst StrawberryPerl
   - path C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
