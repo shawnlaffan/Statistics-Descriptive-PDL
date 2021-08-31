@@ -469,19 +469,6 @@ sub test_stats_when_no_data_added {
         ok (!defined ($result), "$method is undef when object has no data.");
     }
 
-    #  quantile and trimmed_mean require valid args, so don't test in the method loop
-    {
-        local $TODO = 'quantile and trimmed_mean not working yet';
-        my $method = 'quantile';
-        $result = $stat->$method(1);
-        # TEST
-        ok (!defined ($result), "$method is undef when object has no data.");
-    
-        $method = 'trimmed_mean';
-        $result = $stat->$method(0.1);
-        # TEST
-        ok (!defined ($result), "$method is undef when object has no data.");
-    }
 }
 
 #  test SD when only one value added
