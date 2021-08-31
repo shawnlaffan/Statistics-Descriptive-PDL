@@ -6,7 +6,6 @@ use Test::More;
 
 use rlib;
 use lib 't/lib';
-use Utils qw/is_between/;
 
 use Statistics::Descriptive::PDL::Weighted;
 use Statistics::Descriptive;
@@ -91,10 +90,8 @@ sub test_same_as_stats_descr_full {
 
             my $got = $object_pdl->$method;
             my $exp = $object_sdf->$method;
-            is_between (
-                $got,
-                $exp - $tolerance,
-                $exp + $tolerance,
+            ok (
+                abs($got - $exp) < $tolerance,
                 "$method got $got, expected $exp",
             );
         }
@@ -292,18 +289,18 @@ sub test_negative_variance {
     $stat->add_data([(0.001) x 6], [(1)x6]);
 
     # TEST
-    is_between ($stat->variance(),
-        0,
-        0.00001,
-        "Workaround to avoid rounding errors that yield negative variance."
+    my $variance = $stat->variance();
+    
+    ok (
+        $variance >= 0,
+        "variance not negative",
     );
 
-    # TEST
-    is_between ($stat->standard_deviation(),
-        0,
-        0.00001,
-        "Workaround to avoid rounding errors that yield negative std-dev."
+    ok (
+        $variance < 0.00001,
+        "variance < 0.00001",
     );
+
 }
 
 sub test_basics {
@@ -345,12 +342,10 @@ sub test_geometric_mean {
     $stat->add_data([2, 4, 8], [1,1,1]);
 
     # TEST
-    is_between(
-        $stat->geometric_mean(),
-        (4-1e-4),
-        (4+1e-4),
+    ok (
+        abs($stat->geometric_mean() - 4) < 1e-4,
         "Geometric Mean Test #1",
-    )
+    );
 }
 
 sub test_skew_kurt {
@@ -363,18 +358,14 @@ sub test_skew_kurt {
     # TEST
     $expected = 3.11889574523909;
     $got = $stat->skewness();
-    is_between ($got,
-        $expected - 1E-13,
-        $expected + 1E-13,
+    ok (abs ($got - $expected) < 1E-13,
         "Skewness of $expected +/- 1E-13"
     );
 
     # TEST
     $expected = 9.79924471616366;
     $got = $stat->kurtosis();
-    is_between ($got,
-        $expected - 1E-13,
-        $expected + 1E-13,
+    ok (abs($got - $expected) < 1E-13,
         "Kurtosis of $expected +/- 1E-13"
     );
 
@@ -385,18 +376,14 @@ sub test_skew_kurt {
     # TEST
     $expected = -0.306705104889384;
     $got = $stat->skewness();
-    is_between ($got,
-        $expected - 1E-13,
-        $expected + 1E-13,
+    ok (abs ($got - $expected) < 1E-13,
         "Skewness of $expected +/- 1E-13"
     );
 
     # TEST
     $expected = -2.09839497356215;
     $got = $stat->kurtosis();
-    is_between ($got,
-        $expected - 1E-13,
-        $expected + 1E-13,
+    ok (abs ($got - $expected) < 1E-13,
         "Kurtosis of $expected +/- 1E-13"
     );
 
