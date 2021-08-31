@@ -99,15 +99,9 @@ sub kurtosis {
 }
 
 
-
-#  Use interpolation after adjusting weights to be integers.
-#  Makes most sense if one is trying to replicate results
-#  between unweighted and weighted
-#  when the weights are all values of 1,
-#  but who are we to stop people doing other things?
-#  Uses same algorithm as PDL::pctl.
+#  Uses same basic algorithm as PDL::pctl.
 sub percentile {
-    my ($self, $p, $multiplier) = @_;
+    my ($self, $p) = @_;
     my $piddle = $self->_get_data_piddle
       // return undef;
 
@@ -116,12 +110,11 @@ sub percentile {
     $piddle = $self->_deduplicate_piddle;
 
     my $wt_piddle = $self->_get_weights_piddle;
-    if ($multiplier) {
-        $wt_piddle = $wt_piddle * $multiplier;
-    }
-    my $floored_wts = $wt_piddle->floor;
-    my $cumsum = $floored_wts->cumusumover->reshape;
-    my $wt_sum = $floored_wts->sum;
+    #if ($multiplier) {
+    #    $wt_piddle = $wt_piddle * $multiplier;
+    #}
+    my $cumsum = $wt_piddle->cumusumover->reshape;
+    my $wt_sum = $wt_piddle->sum;
 
     use POSIX qw /floor/;
 
