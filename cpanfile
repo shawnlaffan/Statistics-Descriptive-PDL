@@ -1,5 +1,5 @@
 requires "PDL";
-requires "PDL::Statistics";
+requires "PDL::Stats";
 requires "Statistics::Descriptive";
 requires "Test::More";
 requires "List::Util";
