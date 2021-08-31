@@ -1,4 +1,5 @@
 .travis.yml
+appveyor.yml
 Changes
 ignore.txt
 lib/Statistics/Descriptive/PDL.pm
@@ -13,11 +14,9 @@ t/00-load.t
 t/descr.t
 t/descr_weighted.t
 t/equal_weights.t
-t/equal_wts2.t
 t/lib/Utils.pm
-t/manifest.t
 t/mode.t
-t/xx.t
+t/weighted_and_interpolated.t
 xt/.perlcritic-history
 xt/01-has_versions.t
 xt/03-has_pod.t
