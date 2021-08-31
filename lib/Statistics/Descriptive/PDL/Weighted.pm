@@ -372,62 +372,6 @@ sub percentile {
     return $data($idx)->sclr;
 }
 
-sub percentile_interpolated {undef}
-sub median_interpolated {undef};
-
-#  Use interpolation after adjusting weights to be integers.
-#  Makes most sense if one is trying to replicate results
-#  between unweighted and weighted
-#  when the weights are all values of 1,
-#  but who are we to stop people doing other things?
-#  Uses same algorithm as PDL::pctl.
-#sub percentile_interpolated {
-#    my ($self, $p, $multiplier) = @_;
-#    my $piddle = $self->_get_data_piddle
-#      // return undef;
-#
-#    return undef if $piddle->isempty;
-#
-#    $piddle = $self->_deduplicate_piddle;
-#
-#    my $wt_piddle = $piddle(,1);
-#    if ($multiplier) {
-#        $wt_piddle *= $multiplier;
-#    }
-#    my $floored_wts = $wt_piddle->floor;
-#    my $cumsum = $floored_wts->cumusumover->reshape;
-#    my $wt_sum = $floored_wts->sum;
-#
-#    use POSIX qw /floor/;
-#
-#    my $target_wt = ($p / 100) * ($wt_sum - 1) + 1;
-#    my $k = floor $target_wt;
-#    my $d = $target_wt - $k;
-#
-#    my $idx = PDL->pdl($k)->vsearch_insert_leftmost($cumsum)->sclr;
-#
-#    #  we need to interpolate if our target weight falls between two sets of weights
-#    #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
-#    my $fraction = ($target_wt - $cumsum($idx))->sclr;
-#    if ($fraction < 1) {
-#        my $lower_val = $piddle($idx,0)->sclr;
-#        my $upper_val = $piddle($idx+1,0)->sclr;
-#        my $val = $lower_val + $d * ($upper_val - $lower_val);
-#        return $val;
-#    }
-#
-#    return $piddle($idx,0)->sclr;
-#}
-
-#sub median_interpolated {
-#    return $_[0]->percentile_interpolated (50, $_[1]);
-#}
-
-#  place holders
-sub quantile {undef}
-sub trimmed_mean {undef}
-sub least_squares_fit {undef}
-
 
 1;
 

@@ -263,12 +263,6 @@ sub percentile {
     return $piddle->pct($p / 100);
 }
 
-#  place holders
-sub quantile {undef}
-sub trimmed_mean {undef}
-sub least_squares_fit {undef}
-
-
 1;
 
 __END__

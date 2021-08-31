@@ -137,14 +137,6 @@ sub percentile {
     return $piddle($idx)->sclr;
 }
 
-#sub median {
-#    return $_[0]->percentile (50, $_[1]);
-#}
-
-#  place holders
-sub quantile {undef}
-sub trimmed_mean {undef}
-sub least_squares_fit {undef}
 
 
 1;
