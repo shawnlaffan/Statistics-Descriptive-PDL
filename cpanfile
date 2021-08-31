@@ -7,3 +7,4 @@ requires "Scalar::Util";
 requires "List::MoreUtils";
 requires "List::MoreUtils::XS";
 requires "rlib";
+requires "Devel::Symdump";
