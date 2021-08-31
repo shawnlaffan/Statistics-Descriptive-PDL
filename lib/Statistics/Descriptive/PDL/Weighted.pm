@@ -29,6 +29,8 @@ sub new {
 }
 
 
+sub _wt_type{PDL::double()}
+
 sub add_data {
     my ($self, $data, $weights) = @_;
 
@@ -36,13 +38,13 @@ sub add_data {
 
     if (ref $data eq 'HASH') {
         $data_pdl    = PDL->pdl ([keys %$data])->flat;
-        $weights_pdl = PDL->pdl ([values %$data])->flat;
+        $weights_pdl = PDL->pdl ($self->_wt_type, [values %$data])->flat;
     }
     else {
         die "data and weight vectors not of same length"
           if scalar @$data != scalar @$weights;
         $data_pdl    = PDL->pdl ($data)->flat;
-        $weights_pdl = PDL->pdl ($weights)->flat;
+        $weights_pdl = PDL->pdl ($self->_wt_type, $weights)->flat;
     }
 
     return if !$data_pdl(,0)->nelem;
