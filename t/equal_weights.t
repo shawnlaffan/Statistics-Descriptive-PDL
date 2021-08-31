@@ -6,8 +6,6 @@ use Test::More;
 
 use rlib;
 use lib 't/lib';
-use Utils qw/is_between compare_hash_by_ranges/;
-
 
 use Statistics::Descriptive::PDL::Weighted;
 use Statistics::Descriptive;
