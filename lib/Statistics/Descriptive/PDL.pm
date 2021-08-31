@@ -235,7 +235,7 @@ sub mode {
     my $count  = $piddle->nelem;
     my $unique = $piddle->uniq;
 
-    return undef if $unique->nelem == $count || $unique->nelem == 1;
+    return undef if $unique->nelem == $count or $unique->nelem == 1;
 
     #if (!($count % $unique->nelem)) {
     #    #  might have equal numbers of each value
