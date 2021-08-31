@@ -26,30 +26,26 @@ sub _wt_type{PDL::long()}
 sub standard_deviation {
     my $self = shift;
 
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
-
-warn "NEED TO MAKE THIS UNBIASED";
-
     my $sd;
-    my $n = $piddle(,0)->nelem;
-    if ($n > 1) {
-        #  long winded approach
-        my $mean = $self->mean;
-        my $sumsqr = ($piddle(,1) * (($piddle(,0) - $mean) ** 2))->sum;
-        my $var = $sumsqr / $self->sum_weights;
-        $sd = sqrt $var;
-    }
-    elsif ($n == 1){
-        $sd = 0;
-    }
+    
+    my $wts = $self->_get_weights_piddle;
+    my $n = $wts->sum->sclr;
+
+    return 0 if $n == 1;
+
+    my $var = ((($data ** 2) * $wts)->sum - $n * $self->mean ** 2)->sclr;
+
+    $sd = $var > 0 ? sqrt ($var / ($n - 1)) : 0;
+
     return $sd;
 }
 
 
 sub median {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_data_piddle
       // return undef;
     return undef if $piddle->isempty;
 
@@ -60,36 +56,45 @@ sub median {
     #  vsearch should be faster since it uses a binary search
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
-    return $piddle($idx,0)->sclr;
+    return ($piddle($idx) + $piddle($idx+1))->sclr / 2;
 }
 
 
 sub skewness {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
 
-    return undef if $piddle(,0)->isempty;
+    return undef if $data->isempty;
 
     #  long winded approach
     my $mean = $self->mean;
     my $sd   = $self->standard_deviation;
-    my $sumpow3 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 3))->sum;
+    my $wts  = $self->_get_weights_piddle;
+    my $sumpow3 = ($wts * ((($data - $mean) / $sd) ** 3))->sum;
     my $skew = $sumpow3 / $self->sum_weights;
     return $skew;
 }
 
 sub kurtosis {
     my $self = shift;
-    my $piddle = $self->_get_piddle
+    my $data = $self->_get_data_piddle
       // return undef;
-    return undef if $piddle(,0)->isempty;
+    return undef if $data->isempty;
 
     #  long winded approach
     my $mean = $self->mean;
     my $sd   = $self->standard_deviation;
-    my $sumpow4 = ($piddle(,1) * ((($piddle(,0) - $mean) / $sd) ** 4))->sum;
-    my $kurt = $sumpow4 / $self->sum_weights - 3;
+    my $wts  = $self->_get_weights_piddle;
+    my $n = $wts->sum->sclr;
+
+    my $sumpow4 = ($wts * ((($data - $mean) / $sd) ** 4))->sum;
+
+    my $correction1 = ( $n * ($n+1) ) / ( ($n-1) * ($n-2) * ($n-3) );
+    my $correction2 = ( 3  * ($n-1) ** 2) / ( ($n-2) * ($n-3) );
+
+    my $kurt = ( $correction1 * $sumpow4 ) - $correction2;
+
     return $kurt;
 }
 
@@ -103,16 +108,16 @@ sub kurtosis {
 #  Uses same algorithm as PDL::pctl.
 sub percentile {
     my ($self, $p, $multiplier) = @_;
-    my $piddle = $self->_get_piddle
+    my $piddle = $self->_get_data_piddle
       // return undef;
 
     return undef if $piddle->isempty;
 
     $piddle = $self->_deduplicate_piddle;
 
-    my $wt_piddle = $piddle(,1);
+    my $wt_piddle = $self->_get_weights_piddle;
     if ($multiplier) {
-        $wt_piddle *= $multiplier;
+        $wt_piddle = $wt_piddle * $multiplier;
     }
     my $floored_wts = $wt_piddle->floor;
     my $cumsum = $floored_wts->cumusumover->reshape;
@@ -130,18 +135,18 @@ sub percentile {
     #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
     my $fraction = ($target_wt - $cumsum($idx))->sclr;
     if ($fraction < 1) {
-        my $lower_val = $piddle($idx,0)->sclr;
-        my $upper_val = $piddle($idx+1,0)->sclr;
+        my $lower_val = $piddle($idx)->sclr;
+        my $upper_val = $piddle($idx+1)->sclr;
         my $val = $lower_val + $d * ($upper_val - $lower_val);
         return $val;
     }
 
-    return $piddle($idx,0)->sclr;
+    return $piddle($idx)->sclr;
 }
 
-sub median_interpolated {
-    return $_[0]->percentile (50, $_[1]);
-}
+#sub median {
+#    return $_[0]->percentile (50, $_[1]);
+#}
 
 #  place holders
 sub quantile {undef}

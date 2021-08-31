@@ -10,7 +10,7 @@ use Utils qw /is_between/;
 
 
 use Statistics::Descriptive::PDL;
-use Statistics::Descriptive::PDL::Weighted;
+use Statistics::Descriptive::PDL::SampleWeighted;
 
 #use PDL::Lite;
 #use PDL::NiceSlice;
@@ -25,7 +25,7 @@ use Scalar::Util qw /blessed/;
 
 my $stats_class     = 'Statistics::Descriptive::PDL';
 #my $stats_class_wtd = 'Statistics::Descriptive::PDL';
-my $stats_class_wtd = 'Statistics::Descriptive::PDL::Weighted';
+my $stats_class_wtd = 'Statistics::Descriptive::PDL::SampleWeighted';
 my $tolerance = 1E-10;
 
 #use Devel::Symdump;
@@ -48,8 +48,8 @@ sub test_wikipedia_percentile_example {
     $unweighted->add_data(\@data);
     $weighted->add_data(\@data, \@wts);
 
-    is ($unweighted->percentile(40),            29, 'interpolated pctl 40, unweighted');
-    is ($weighted->percentile_interpolated(40), 29, 'interpolated pctl 40, weighted');
+    is ($unweighted->percentile(40), 29, 'interpolated pctl 40, unweighted');
+    is ($weighted->percentile(40),   29, 'interpolated pctl 40, weighted');
 
     @data = (1..4);
     $unweighted = $stats_class->new;
@@ -58,7 +58,7 @@ sub test_wikipedia_percentile_example {
     $weighted->add_data(\@data, [(1) x scalar @data]);
 
     is ($unweighted->percentile(75),            3.25, 'interpolated pctl 75 of 1..4, unweighted');
-    is ($weighted->percentile_interpolated(75), 3.25, 'interpolated pctl 75 of 1..4, weighted');
+    is ($weighted->percentile(75), 3.25, 'interpolated pctl 75 of 1..4, weighted');
 }
 
 sub test_equal_weights {
@@ -85,8 +85,8 @@ sub test_equal_weights {
         #skewness => 'skew',
         #kurtosis => 'kurt',
         #standard_deviation => 'standard_deviation',
-        median     => 'median_interpolated',
-        percentile => 'percentile_interpolated',
+        #median     => 'median_interpolated',
+        #percentile => 'percentile_interpolated',
     );
     my %method_args = (
         percentile => [91.5],
@@ -106,6 +106,7 @@ sub test_equal_weights {
             #  allow for precision differences
             my $got = $weighted->$wtd_method (@$args_to_pass);
             my $exp = $unweighted->$method (@$args_to_pass);
+
             is_between (
                 $got,
                 $exp - $tolerance,
