@@ -6,7 +6,6 @@ use Test::More;
 
 use rlib;
 use lib 't/lib';
-use Utils qw /is_between/;
 
 
 use Statistics::Descriptive::PDL;
@@ -107,10 +106,8 @@ sub test_equal_weights {
             my $got = $weighted->$wtd_method (@$args_to_pass);
             my $exp = $unweighted->$method (@$args_to_pass);
 
-            is_between (
-                $got,
-                $exp - $tolerance,
-                $exp + $tolerance,
+            ok (
+                abs ($got - $exp) < $tolerance,
                 "$method got $got, expected $exp",
             );
         }
