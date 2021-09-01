@@ -218,6 +218,7 @@ sub _sort_piddle {
 
 #  de-duplicate if needed, aggregating weights
 #  there should be a sumover or which approach that will work better
+#  maybe yvals related
 sub _deduplicate_piddle {
     my $self = shift;
     my $piddle = $self->_get_data_piddle
@@ -236,7 +237,7 @@ sub _deduplicate_piddle {
     
     push @data, $piddle(0)->sclr;
     push @wts,  $wts_piddle(0)->sclr;
-    my $last_val = $data[0];
+    my $last_val = $piddle(0);
 
     #  could use a map into a hash, but this avoids
     #  stringification and loss of precision
@@ -244,13 +245,14 @@ sub _deduplicate_piddle {
     #  Should be able to use ->setops for this process to reduce looping
     #  when there are not many dups in large data sets
     foreach my $i (1..$piddle->nelem-1) {
-        if ($piddle($i) == $last_val) {
+        my $val = $piddle($i);
+        if ($val == $last_val) {
             $wts[-1] += $wts_piddle($i)->sclr;
         }
         else {
-            push @data, $piddle($i)->sclr;
+            $last_val = $val;
+            push @data, $last_val->sclr;
             push @wts,  $wts_piddle($i)->sclr;
-            $last_val = $data[-1];
         }
     }
     $self->_set_data_piddle(\@data);
