@@ -20,9 +20,14 @@ our $VERSION = '0.02';
 
 sub new {
     my $proto = shift;
+    my $data_type = shift // PDL::double();
     my $class = ref($proto) || $proto;
 
-    my $self = {data_piddle => undef, weights_piddle => undef};
+    my $self = {
+        data_piddle    => undef,
+        weights_piddle => undef,
+        data_type      => $data_type,
+    };
     bless $self, $class;
 
     return $self;
@@ -45,7 +50,7 @@ sub add_data {
     else {
         die "data and weight vectors not of same length"
           if scalar @$data != scalar @$weights;
-        $data_piddle    = PDL->pdl ($data)->flat;
+        $data_piddle    = PDL->pdl ($self->{data_type}, $data)->flat;
         $weights_piddle = PDL->pdl ($self->_wt_type, $weights)->flat;
     }
 
