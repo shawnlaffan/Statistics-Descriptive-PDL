@@ -111,7 +111,7 @@ sub sum_weights {
     my $piddle = $self->_get_weights_piddle
       // return undef;
     return undef if $piddle->isempty;
-    return $piddle->sum;
+    return $piddle->sum->sclr;
 }
 
 sub min {

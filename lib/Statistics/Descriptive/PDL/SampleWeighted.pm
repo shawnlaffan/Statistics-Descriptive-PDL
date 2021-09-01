@@ -86,7 +86,7 @@ sub kurtosis {
     my $mean = $self->mean;
     my $sd   = $self->standard_deviation;
     my $wts  = $self->_get_weights_piddle;
-    my $n = $wts->sum->sclr;
+    my $n    = $self->sum_weights;
 
     my $sumpow4 = ($wts * ((($data - $mean) / $sd) ** 4))->sum;
 
