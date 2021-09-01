@@ -22,7 +22,7 @@ sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
 
-    my $self = {piddle => undef};
+    my $self = {data_piddle => undef, weights_piddle => undef};
     bless $self, $class;
 
     return $self;
@@ -35,6 +35,8 @@ sub add_data {
     my ($self, $data, $weights) = @_;
 
     my ($data_piddle, $weights_piddle);
+    
+    delete $self->{_cache};
 
     if (ref $data eq 'HASH') {
         $data_piddle    = PDL->pdl ([keys %$data])->flat;
@@ -108,10 +110,14 @@ sub sum {
 
 sub sum_weights {
     my $self = shift;
+    
+    return $self->{_cache}{sum_weights}
+      if defined $self->{_cache}{sum_weights};
+    
     my $piddle = $self->_get_weights_piddle
       // return undef;
     return undef if $piddle->isempty;
-    return $piddle->sum->sclr;
+    return $self->{_cache}{sum_weights} = $piddle->sum->sclr;
 }
 
 sub min {
@@ -141,18 +147,25 @@ sub min_weight {
 
 sub mean {
     my $self = shift;
+    
+    return $self->{_cache}{mean}
+      if defined $self->{_cache}{mean};
+
     my $data = $self->_get_data_piddle
       // return undef;
 
     return undef if $data->isempty;
     # should cache the sum of wts
     my $wts = $self->_get_weights_piddle;
-    return ($data * $wts)->sum / $wts->sum;
+    return $self->{_cache}{mean} = ($data * $wts)->sum / $wts->sum;
 }
 
 
 sub standard_deviation {
     my $self = shift;
+
+    return $self->{_cache}{standard_deviation}
+      if defined $self->{_cache}{standard_deviation};
 
     my $data = $self->_get_data_piddle
       // return undef;
@@ -169,6 +182,9 @@ sub standard_deviation {
     elsif ($n == 1){
         $sd = 0;
     }
+    
+    $self->{_cache}{standard_deviation} = $sd;
+
     return $sd;
 }
 
@@ -268,6 +284,10 @@ sub _get_cumsum_weight_vector {
 
 sub skewness {
     my $self = shift;
+
+    return $self->{_cache}{skewness}
+      if defined $self->{_cache}{skewness};
+
     my $data = $self->_get_data_piddle
       // return undef;
 
@@ -279,11 +299,15 @@ sub skewness {
     my $wts = $self->_get_weights_piddle;
     my $sumpow3 = ($wts * ((($data - $mean) / $sd) ** 3))->sum;
     my $skew = $sumpow3 / $self->sum_weights;
-    return $skew;
+    return $self->{_cache}{skewness} = $skew;
 }
 
 sub kurtosis {
     my $self = shift;
+
+    return $self->{_cache}{kurtosis}
+      if defined $self->{_cache}{kurtosis};
+
     my $data = $self->_get_data_piddle
       // return undef;
     return undef if $data->isempty;
@@ -294,7 +318,7 @@ sub kurtosis {
     my $wts = $self->_get_weights_piddle;
     my $sumpow4 = ($wts * ((($data - $mean) / $sd) ** 4))->sum;
     my $kurt = $sumpow4 / $self->sum_weights - 3;
-    return $kurt;
+    return $self->{_cache}{kurtosis} = $kurt;
 }
 
 sub sample_range {
@@ -307,6 +331,10 @@ sub sample_range {
 
 sub harmonic_mean {
     my $self = shift;
+    
+    return $self->{_cache}{harmonic_mean}
+      if defined $self->{_cache}{harmonic_mean};
+    
     my $data = $self->_get_data_piddle
       // return undef;
 
@@ -316,11 +344,15 @@ sub harmonic_mean {
     
     my $hs = ((1 / $data) * $wts)->sum;
 
-    return $hs ? $self->count / $hs : undef;
+    return $self->{_cache}{harmonic_mean} = $hs ? $self->count / $hs : undef;
 }
 
 sub geometric_mean {
     my $self = shift;
+
+    return $self->{_cache}{geometric_mean}
+      if defined $self->{_cache}{geometric_mean};
+
     my $data = $self->_get_data_piddle
       // return undef;
 
@@ -334,11 +366,15 @@ sub geometric_mean {
     my $powered = $data * $wts;
 
     my $gm = $powered->dprodover ** $exponent;
-    return $gm;
+    return $self->{_cache}{geometric_mean} = $gm;
 }
 
 sub mode {
     my $self = shift;
+
+    return $self->{_cache}{mode}
+      if defined $self->{_cache}{mode};
+
     my $data = $self->_get_data_piddle
       // return undef;
 
@@ -353,7 +389,8 @@ sub mode {
         #  PDL returns strange numbers when distributions are flat
         $mode = undef;
     }
-    return $mode;
+
+    return $self->{_cache}{mode} = $mode;
 }
 
 #  need to convert $p to fraction, or perhaps die if it is between 0 and 1

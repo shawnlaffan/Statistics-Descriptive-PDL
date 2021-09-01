@@ -26,12 +26,16 @@ sub _wt_type{PDL::long()}
 sub standard_deviation {
     my $self = shift;
 
+    return $self->{_cache}{standard_deviation}
+      if defined $self->{_cache}{standard_deviation};
+
     my $data = $self->_get_data_piddle
       // return undef;
+
     my $sd;
     
     my $wts = $self->_get_weights_piddle;
-    my $n = $wts->sum->sclr;
+    my $n   = $wts->sum->sclr;
 
     return 0 if $n == 1;
 
@@ -39,7 +43,7 @@ sub standard_deviation {
 
     $sd = $var > 0 ? sqrt ($var / ($n - 1)) : 0;
 
-    return $sd;
+    return  $self->{_cache}{standard_deviation} = $sd;
 }
 
 
@@ -62,6 +66,10 @@ sub median {
 
 sub skewness {
     my $self = shift;
+
+    return $self->{_cache}{skewness}
+      if defined $self->{_cache}{skewness};
+
     my $data = $self->_get_data_piddle
       // return undef;
 
@@ -73,11 +81,15 @@ sub skewness {
     my $wts  = $self->_get_weights_piddle;
     my $sumpow3 = ($wts * ((($data - $mean) / $sd) ** 3))->sum;
     my $skew = $sumpow3 / $self->sum_weights;
-    return $skew;
+    return $self->{_cache}{skewness} = $skew;
 }
 
 sub kurtosis {
     my $self = shift;
+
+    return $self->{_cache}{kurtosis}
+      if defined $self->{_cache}{kurtosis};
+
     my $data = $self->_get_data_piddle
       // return undef;
     return undef if $data->isempty;
@@ -95,7 +107,7 @@ sub kurtosis {
 
     my $kurt = ( $correction1 * $sumpow4 ) - $correction2;
 
-    return $kurt;
+    return $self->{_cache}{kurtosis} = $kurt;
 }
 
 
