@@ -57,7 +57,14 @@ sub _median {
     #  vsearch should be faster since it uses a binary search
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum);
 
-    return ($piddle($idx) + $piddle($idx+1))->sclr / 2;
+    #  if the target weight is "on a boundary" between
+    #  two values then we need to interpolate
+    my $median
+      = $target_wt == $cumsum($idx)->sclr
+      ? ($piddle($idx) + $piddle($idx+1)) / 2
+      : $piddle($idx);
+
+    return $median;
 }
 
 
