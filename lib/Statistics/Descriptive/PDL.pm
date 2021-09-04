@@ -3,6 +3,7 @@ package Statistics::Descriptive::PDL;
 use 5.010;
 use strict;
 use warnings;
+use Scalar::Util qw /blessed/;
 
 #  avoid loading too much, especially into our name space
 use PDL::Lite '2.012';
@@ -49,7 +50,7 @@ sub _make_caching_accessors {
 
                 my $call_meth = "_$method";
                 my $val = $self->$call_meth;
-                use Scalar::Util qw /blessed/;
+
                 if (blessed $val and $val->isa('PDL')) {
                     $val = $val->sclr;
                 }
@@ -81,14 +82,17 @@ sub add_data {
     my $self = shift;
     my $data;
 
-    if (ref $_[0] eq 'ARRAY') {
+    #  have we been passed an ndarray?
+    if (blessed $_[0] && $_[0]->isa('PDL')) {
         $data = $_[0];
     }
     else {
-        $data = \@_;
+        $data
+          = ref ($_[0]) eq 'ARRAY'
+          ? $_[0]
+          : \@_;
+        return if !scalar @$data;
     }
-
-    return if !scalar @$data;
 
     my $piddle;
     my $has_existing_data = $self->count;

@@ -61,6 +61,8 @@ sub add_data {
         $weights_piddle = PDL->pdl ($self->_wt_type, $weights)->flat;
         die "data and weight vectors not of same length"
           if scalar $data_piddle->nelem != $weights_piddle->nelem;
+        die "Cannot pass zero or negative weights"
+          if PDL::any($weights_piddle <= 0);
     }
 
     return if !$data_piddle->nelem;
