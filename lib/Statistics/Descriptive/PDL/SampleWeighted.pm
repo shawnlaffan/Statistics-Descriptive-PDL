@@ -20,14 +20,19 @@ our $VERSION = '0.02';
 
 use parent 'Statistics::Descriptive::PDL::Weighted';
 
+my @cache_methods = qw /
+  median
+  standard_deviation skewness kurtosis
+/;
+__PACKAGE__->_make_accessors( \@cache_methods );
+
+
+
 sub _wt_type{PDL::long}
 
 
-sub standard_deviation {
+sub _standard_deviation {
     my $self = shift;
-
-    return $self->{_cache}{standard_deviation}
-      if defined $self->{_cache}{standard_deviation};
 
     my $data = $self->_get_data_piddle
       // return undef;
@@ -43,17 +48,14 @@ sub standard_deviation {
 
     $sd = $var > 0 ? sqrt ($var / ($n - 1)) : 0;
 
-    return  $self->{_cache}{standard_deviation} = $sd;
+    return $sd;
 }
 
 
-sub median {
+sub _median {
     my $self = shift;
     my $piddle = $self->_get_data_piddle
       // return undef;
-      
-    return $self->{_cache}{median}
-      if $self->{_cache}{median};
 
     return undef if $piddle->isempty;
 
@@ -64,15 +66,12 @@ sub median {
     #  vsearch should be faster since it uses a binary search
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
-    return $self->{_cache}{median} = ($piddle($idx) + $piddle($idx+1))->sclr / 2;
+    return ($piddle($idx) + $piddle($idx+1))->sclr / 2;
 }
 
 
-sub skewness {
+sub _skewness {
     my $self = shift;
-
-    return $self->{_cache}{skewness}
-      if defined $self->{_cache}{skewness};
 
     my $data = $self->_get_data_piddle
       // return undef;
@@ -91,14 +90,11 @@ sub skewness {
     my $n = $self->sum_weights;
     my $correction = $n / ( ($n-1) * ($n-2) );
     my $skew = $correction * $sumpow3;
-    return $self->{_cache}{skewness} = $skew;
+    return $skew;
 }
 
-sub kurtosis {
+sub _kurtosis {
     my $self = shift;
-
-    return $self->{_cache}{kurtosis}
-      if defined $self->{_cache}{kurtosis};
 
     my $data = $self->_get_data_piddle
       // return undef;
@@ -117,7 +113,7 @@ sub kurtosis {
 
     my $kurt = ( $correction1 * $sumpow4 ) - $correction2;
 
-    return $self->{_cache}{kurtosis} = $kurt;
+    return $kurt;
 }
 
 
