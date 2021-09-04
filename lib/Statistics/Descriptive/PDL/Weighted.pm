@@ -214,27 +214,24 @@ sub _deduplicate_piddle {
     $piddle = $self->_sort_piddle;
     my $wts_piddle = $self->_get_weights_piddle;
 
-    my $wts = $unique->zeroes ($wts_piddle->type, $unique->nelem);
-
-    my $last_val = $piddle(0);
-
-    #  could use a map into a hash, but this avoids
+    #  could use a map with a hash, but this avoids
     #  stringification and loss of precision
     #  (not that that should cause too many issues for most data)
     #  Should try to reduce looping when there are
     #  not many dups in large data sets
-    my $j = 0;  #  index into deduplicated piddle
-    my $sum = 0;
+    my $j        = 0;  #  index into deduplicated piddle
+    my $last_val = $piddle->at(0);
+    my @wts;
     foreach my $i (0..$piddle->nelem-1) {
-        my $val = $piddle($i);
+        my $val = $piddle->at($i);
         if ($val != $last_val) {
             $j++;
             $last_val = $val;
         }
-        $wts($j) += $wts_piddle($i);
+        $wts[$j] += $wts_piddle->at($i);
     }
     $self->_set_piddle($unique);
-    $self->_set_weights_piddle($wts);
+    $self->_set_weights_piddle(\@wts);
 
     delete $self->{_cache};
 
