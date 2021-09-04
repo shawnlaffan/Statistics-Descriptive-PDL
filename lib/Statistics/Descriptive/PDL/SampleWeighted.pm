@@ -34,10 +34,7 @@ sub _wt_type{PDL::long}
 sub _standard_deviation {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-
-    my $sd;
+    my $data = $self->_get_piddle;
     
     my $wts = $self->_get_weights_piddle;
     my $n   = $wts->sum->sclr;
@@ -46,20 +43,14 @@ sub _standard_deviation {
 
     my $var = ((($data ** 2) * $wts)->sum - $n * $self->mean ** 2)->sclr;
 
-    $sd = $var > 0 ? sqrt ($var / ($n - 1)) : 0;
-
-    return $sd;
+    return $var > 0 ? sqrt ($var / ($n - 1)) : 0;
 }
 
 
 sub _median {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
 
-    return undef if $piddle->isempty;
-
-    $piddle = $self->_sort_piddle;
+    my $piddle = $self->_sort_piddle;
     my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * 0.5;
@@ -73,10 +64,7 @@ sub _median {
 sub _skewness {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-
-    return undef if $data->isempty;
+    my $data = $self->_get_piddle;
 
     #  long winded approach
     my $mean = $self->mean;
@@ -96,11 +84,7 @@ sub _skewness {
 sub _kurtosis {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-    return undef if $data->isempty;
-
-    #  long winded approach
+    my $data = $self->_get_piddle;
     my $mean = $self->mean;
     my $sd   = $self->standard_deviation;
     my $wts  = $self->_get_weights_piddle;
@@ -111,27 +95,23 @@ sub _kurtosis {
     my $correction1 = ( $n * ($n+1) ) / ( ($n-1) * ($n-2) * ($n-3) );
     my $correction2 = ( 3  * ($n-1) ** 2) / ( ($n-2) * ($n-3) );
 
-    my $kurt = ( $correction1 * $sumpow4 ) - $correction2;
-
-    return $kurt;
+    return ( $correction1 * $sumpow4 ) - $correction2;
 }
 
 
 #  Uses same basic algorithm as PDL::pctl.
 sub percentile {
     my ($self, $p) = @_;
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
 
-    return undef if $piddle->isempty;
+    return undef
+      if !defined $piddle or $piddle->isempty;
 
     $piddle = $self->_deduplicate_piddle;
 
     my $wt_piddle = $self->_get_weights_piddle;
-    #if ($multiplier) {
-    #    $wt_piddle = $wt_piddle * $multiplier;
-    #}
-    my $cumsum = $wt_piddle->cumusumover->reshape;
+
+    my $cumsum = $self->_get_cumsum_weight_vector;
     my $wt_sum = $wt_piddle->sum;
 
     use POSIX qw /floor/;
@@ -152,7 +132,7 @@ sub percentile {
         return $val;
     }
 
-    return $piddle($idx)->sclr;
+    return $piddle($idx);
 }
 
 
