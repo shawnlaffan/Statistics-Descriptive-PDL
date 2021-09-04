@@ -50,12 +50,24 @@ sub test_mode {
     my $object = $stats_class->new;
     
     my @data = (1..10, 5, 5, 2, 3, 2, 3, 5);
-    $object->add_data(\@data, [(1) x scalar @data]);
+    my @wts  = (1) x @data;
+    unshift @data, 11;
+    unshift @wts, 100.5;
+    $object->add_data(\@data, \@wts);
     
     my $sd = $object->standard_deviation;
-    is ($object->mode, 5, 'Mode is 5');
     
-    is ($object->standard_deviation, $sd, "SD unchanged by deduplication in ->mode");
+    my $nelems = $object->_get_data_piddle->nelem;
+
+    is $nelems, scalar @data, 'correct number of elements to start with';
+
+    is ($object->mode, 11, 'Mode is 11');
+
+    my $nelems_after = $object->_get_data_piddle->nelem;
+    
+    is $nelems_after, 11, 'deduplication gives correct number of elements';
+    
+    ok (abs ($sd - $object->standard_deviation) < $tolerance, "SD unchanged by deduplication in ->mode");
 
 }
 

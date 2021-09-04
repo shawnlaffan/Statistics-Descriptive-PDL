@@ -66,8 +66,7 @@ sub add_data {
         my $w_piddle = $self->_get_weights_piddle;
         $w_piddle    = $w_piddle->append ($weights_piddle);
         $self->_set_weights_piddle ($w_piddle);
-        
-        delete $self->{cumsum_weight_vector};
+
         delete $self->{sorted};
     }
     else {
@@ -226,13 +225,12 @@ sub _sort_piddle {
     my $s = $data->qsorti->reshape;
     my $sorted_data = $data($s);
     my $sorted_wts  = $wts($s);
-
+    
     $self->_set_data_piddle($sorted_data);
     $self->_set_weights_piddle($sorted_wts);
 
     $self->{sorted} = 1;
-    $self->{cumsum_weight_vector}
-      = $sorted_wts->cumusumover->reshape;  #  need to cache this
+    delete $self->{_cache}{cumsum_weight_vector};
 
     return $sorted_data;
 }
@@ -249,22 +247,15 @@ sub _deduplicate_piddle {
 
     return $self->_get_data_piddle
      if $unique->nelem == $piddle->nelem;
-     
-    my $wts_piddle = $self->_get_weights_piddle;
 
     if (!$self->{sorted}) {
         $unique = $unique->qsort;
     }
 
     $piddle = $self->_sort_piddle;
+    my $wts_piddle = $self->_get_weights_piddle;
 
     my $wts = $unique->zeroes ($wts_piddle->type, $unique->nelem);
-##    my $ww = zeroes (PDL::Types::long, $unique->list);
-##    local $| = 1;
-#say STDERR "TYPE OF WTS PIDDLE IS " . PDL::type ($wts_piddle);
-#say STDERR "TYPE OF WTS IS " . PDL::type ($wts);
-##say STDERR "TYPE OF WW IS "  . PDL::type ($ww);
-#say STDERR "EXPECT TYPE OF WTS IS " . $self->_wt_type;
 
     my $last_val = $piddle(0);
 
@@ -275,7 +266,7 @@ sub _deduplicate_piddle {
     #  not many dups in large data sets
     my $j = 0;  #  index into deduplicated piddle
     my $sum = 0;
-    foreach my $i (1..$piddle->nelem-1) {
+    foreach my $i (0..$piddle->nelem-1) {
         my $val = $piddle($i);
         if ($val != $last_val) {
             $j++;
@@ -286,12 +277,18 @@ sub _deduplicate_piddle {
     $self->_set_data_piddle($unique);
     $self->_set_weights_piddle($wts);
 
+    delete $self->{_cache};
+
     return $self->_get_data_piddle;
 }
 
 sub _get_cumsum_weight_vector {
     my $self = shift;
-    return $self->{cumsum_weight_vector};
+
+    return $self->{_cache}{cumsum_weight_vector}
+      if defined $self->{_cache}{cumsum_weight_vector};
+    return $self->{_cache}{cumsum_weight_vector}
+      = $self->_get_weights_piddle->cumusumover->reshape;
 }
 
 sub skewness {
