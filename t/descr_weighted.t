@@ -45,6 +45,21 @@ sub main {
     return 0;
 }
 
+sub test_invalid_weights {
+    #  should use Test::Exception
+    my $obj = $stats_class->new();
+    
+    eval {$obj->add_data ([0,1,2], [0,1,2])};
+    ok $@, 'exception raised for zero weight';
+    
+    eval {$obj->add_data ([0,1,2], [-1,1,2])};
+    ok $@, 'exception raised for negative weight';
+    
+    eval {$obj->add_data ([0,1,2], [1,2])};
+    ok $@, 'exception raised when data and weights have different lengths';
+}
+
+
 sub test_empty {
     my $obj = $stats_class->new();
     foreach my $stat ($obj->available_stats) {
