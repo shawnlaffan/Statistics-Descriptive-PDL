@@ -51,6 +51,10 @@ sub median {
     my $self = shift;
     my $piddle = $self->_get_data_piddle
       // return undef;
+      
+    return $self->{_cache}{median}
+      if $self->{_cache}{median};
+
     return undef if $piddle->isempty;
 
     $piddle = $self->_sort_piddle;
@@ -60,7 +64,7 @@ sub median {
     #  vsearch should be faster since it uses a binary search
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
-    return ($piddle($idx) + $piddle($idx+1))->sclr / 2;
+    return $self->{_cache}{median} = ($piddle($idx) + $piddle($idx+1))->sclr / 2;
 }
 
 
