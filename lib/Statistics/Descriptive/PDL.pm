@@ -19,6 +19,44 @@ our $VERSION = '0.02';
 
 our $Tolerance = 0.0;  #  for compatibility with Stats::Descr, but not used here
 
+my @cache_methods = qw /
+  count sum mode median
+  mean standard_deviation skewness kurtosis
+  geometric_mean harmonic_mean
+  max min sample_range
+/;
+__PACKAGE__->_make_accessors( \@cache_methods );
+
+sub _make_accessors {
+    my ( $pkg, $methods ) = @_;
+ 
+    ## no critic
+    no strict 'refs';
+    ## use critic
+    foreach my $method (@$methods)
+    {
+        *{ $pkg . "::" . $method } = do
+        {
+            my $m = $method;
+            sub {
+                my $self = shift;
+                return $self->{_cache}{$method}
+                  if defined $self->{_cache}{$method};
+ 
+                my $call_meth = "_$method";
+                my $val = $self->$call_meth;
+                use Scalar::Util qw /blessed/;
+                if (blessed $val and $val->isa('PDL')) {
+                    $val = $val->sclr;
+                }
+                return $self->{_cache}{$method} = $val;
+            };
+        };
+    }
+ 
+    return;
+}
+
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -46,6 +84,8 @@ sub add_data {
     my $piddle;
     my $has_existing_data = $self->count;
 
+    $self->clear_cache;
+
     # Take care of appending to an existing data set
     if ($has_existing_data) {
         $piddle = $self->_get_piddle;
@@ -70,14 +110,20 @@ sub _get_piddle {
     return $self->{piddle};
 }
 
-sub count {
+sub clear_cache {
+    my $self = shift;
+    delete $self->{_cache};
+    return;
+}
+
+sub _count {
     my $self = shift;
     my $piddle = $self->_get_piddle
-      // return 0;
+      // return undef;
     return $piddle->nelem;
 }
 
-sub sum {
+sub _sum {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -85,21 +131,21 @@ sub sum {
 }
 
 
-sub min {
+sub _min {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
     return $piddle->nelem ? $piddle->min : undef;
 }
 
-sub max {
+sub _max {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
     return $piddle->nelem ? $piddle->max : undef;
 }
 
-sub mean {
+sub _mean {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -107,7 +153,7 @@ sub mean {
 }
 
 
-sub standard_deviation {
+sub _standard_deviation {
     my $self = shift;
 
     my $piddle = $self->_get_piddle
@@ -135,7 +181,7 @@ sub variance {
     return defined $sd ? $sd ** 2 : undef;
 }
 
-sub median {
+sub _median {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -143,7 +189,7 @@ sub median {
 }
 
 
-sub skewness {
+sub _skewness {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -165,7 +211,7 @@ sub skewness {
     return $skew;
 }
 
-sub kurtosis {
+sub _kurtosis {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -189,7 +235,7 @@ sub kurtosis {
     return $kurt;
 }
 
-sub sample_range {
+sub _sample_range {
     my $self = shift;
     my $min = $self->min // return undef;
     my $max = $self->max // return undef;
@@ -197,7 +243,7 @@ sub sample_range {
 }
 
 
-sub harmonic_mean {
+sub _harmonic_mean {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -209,7 +255,7 @@ sub harmonic_mean {
     return $hs ? $self->count / $hs : undef;
 }
 
-sub geometric_mean {
+sub _geometric_mean {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
@@ -225,7 +271,7 @@ sub geometric_mean {
     my $gm = $powered->dprodover;
 }
 
-sub mode {
+sub _mode {
     my $self = shift;
     my $piddle = $self->_get_piddle
       // return undef;
