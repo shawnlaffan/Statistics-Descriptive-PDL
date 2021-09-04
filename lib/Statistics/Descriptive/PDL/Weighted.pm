@@ -57,10 +57,10 @@ sub add_data {
         $weights_piddle = PDL->pdl ($self->_wt_type, [values %$data])->flat;
     }
     else {
-        die "data and weight vectors not of same length"
-          if scalar @$data != scalar @$weights;
         $data_piddle    = PDL->pdl ($self->{data_type}, $data)->flat;
         $weights_piddle = PDL->pdl ($self->_wt_type, $weights)->flat;
+        die "data and weight vectors not of same length"
+          if scalar $data_piddle->nelem != $weights_piddle->nelem;
     }
 
     return if !$data_piddle->nelem;
