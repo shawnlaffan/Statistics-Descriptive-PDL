@@ -24,7 +24,6 @@ my @cache_methods = qw /
   count sum mode median
   mean standard_deviation skewness kurtosis
   geometric_mean harmonic_mean
-  max min sample_range
   sum_weights
 /;
 __PACKAGE__->_make_caching_accessors( \@cache_methods );
@@ -119,20 +118,10 @@ sub _sum_weights {
     return $self->_get_weights_piddle->sum;
 }
 
-sub _min {
-    my $self = shift;
-    return $self->_get_piddle->min;
-}
-
-sub _max {
-    my $self = shift;
-    return $self->_get_piddle->max;
-}
-
-sub min_weight {
-    my $self = shift;
-    return $self->_get_weights_piddle->min;
-}
+#sub min_weight {
+#    my $self = shift;
+#    return $self->_get_weights_piddle->min;
+#}
 
 
 sub _mean {
@@ -287,13 +276,6 @@ sub _kurtosis {
     my $sumpow4 = ($wts * ((($data - $mean) / $sd) ** 4))->sum;
     my $kurt = $sumpow4 / $self->sum_weights - 3;
     return $kurt;
-}
-
-sub _sample_range {
-    my $self = shift;
-    my $min = $self->min // return undef;
-    my $max = $self->max // return undef;
-    return $max - $min;
 }
 
 
