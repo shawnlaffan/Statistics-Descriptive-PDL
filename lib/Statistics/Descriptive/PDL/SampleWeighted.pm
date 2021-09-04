@@ -80,7 +80,9 @@ sub skewness {
     my $sd   = $self->standard_deviation;
     my $wts  = $self->_get_weights_piddle;
     my $sumpow3 = ($wts * ((($data - $mean) / $sd) ** 3))->sum;
-    my $skew = $sumpow3 / $self->sum_weights;
+    my $n = $self->sum_weights;
+    my $correction = $n / ( ($n-1) * ($n-2) );
+    my $skew = $correction * $sumpow3;
     return $self->{_cache}{skewness} = $skew;
 }
 
