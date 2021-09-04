@@ -90,15 +90,6 @@ sub add_data {
     return $self->count;
 }
 
-#sub _set_piddle {
-#    my ($self, $data) = @_;
-#    $self->{data_piddle} = PDL->pdl ($data);
-#}
-#
-#sub _get_piddle {
-#    my $self = shift;
-#    return $self->{data_piddle};
-#}
 
 sub _set_weights_piddle {
     my ($self, $data) = @_;
@@ -119,55 +110,36 @@ sub _count {
 
 sub _sum {
     my $self = shift;
-    my $data = $self->_get_piddle
-      // return undef;
-    return undef if $data->isempty;
-    return ($data * $self->_get_weights_piddle)->sum;
+    return ($self->_get_piddle * $self->_get_weights_piddle)->sum;
 }
 
 sub _sum_weights {
     my $self = shift;
-        
-    my $piddle = $self->_get_weights_piddle
-      // return undef;
-    return undef if $piddle->isempty;
-    return $piddle->sum->sclr;
+
+    return $self->_get_weights_piddle->sum;
 }
 
 sub _min {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return undef if $piddle->isempty;
-    return $piddle->min;
+    return $self->_get_piddle->min;
 }
 
 sub _max {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return undef if $piddle->isempty;
-    return $piddle->max;
+    return $self->_get_piddle->max;
 }
 
 sub min_weight {
     my $self = shift;
-    my $piddle = $self->_get_weights_piddle
-      // return undef;
-    return undef if $piddle->isempty;
-    return $piddle->min;
+    return $self->_get_weights_piddle->min;
 }
 
 
 sub _mean {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-
-    return undef if $data->isempty;
-    # should cache the sum of wts
-    my $wts = $self->_get_weights_piddle;
+    my $data = $self->_get_piddle;
+    my $wts  = $self->_get_weights_piddle;
     return ($data * $wts)->sum / $wts->sum;
 }
 
@@ -175,8 +147,7 @@ sub _mean {
 sub _standard_deviation {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
+    my $data = $self->_get_piddle;
     my $sd;
     my $n = $data->nelem;
     if ($n > 1) {
@@ -202,18 +173,15 @@ sub variance {
 
 sub _median {
     my $self = shift;
-    my $data = $self->_get_piddle
-      // return undef;
-    return undef if $data->isempty;
 
-    $data = $self->_sort_piddle;
+    my $data = $self->_sort_piddle;
     my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * 0.5;
     #  vsearch should be faster since it uses a binary search
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
-    return $data($idx)->sclr;
+    return $data($idx);
 }
 
 sub _sort_piddle {
@@ -248,7 +216,7 @@ sub _deduplicate_piddle {
     my $unique = $piddle->uniq;
 
     return $self->_get_piddle
-     if $unique->nelem == $piddle->nelem;
+      if $unique->nelem == $piddle->nelem;
 
     if (!$self->{sorted}) {
         $unique = $unique->qsort;
@@ -296,10 +264,7 @@ sub _get_cumsum_weight_vector {
 sub _skewness {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-
-    return undef if $data->isempty;
+    my $data = $self->_get_piddle;
 
     #  long winded approach
     my $mean = $self->mean;
@@ -313,9 +278,7 @@ sub _skewness {
 sub _kurtosis {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-    return undef if $data->isempty;
+    my $data = $self->_get_piddle;
 
     #  long winded approach
     my $mean = $self->mean;
@@ -337,9 +300,9 @@ sub _sample_range {
 sub _harmonic_mean {
     my $self = shift;
     
-    my $data = $self->_get_piddle
-      // return undef;
+    my $data = $self->_get_piddle;
 
+    #  not sure about this...
     return undef if $data->which->nelem != $data->nelem;
 
     my $wts = $self->_get_weights_piddle;
@@ -352,10 +315,8 @@ sub _harmonic_mean {
 sub _geometric_mean {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
+    my $data = $self->_get_piddle;
 
-    return undef if $data->isempty;
     #  should add a sorted status check, as we can use vsearch in such cases
     return undef if $data->where($data < 0)->nelem;
 
@@ -364,17 +325,13 @@ sub _geometric_mean {
     my $exponent = 1 / $self->sum_weights;
     my $powered = $data * $wts;
 
-    my $gm = $powered->dprodover ** $exponent;
-    return $gm;
+    return $powered->dprodover ** $exponent;
 }
 
 sub _mode {
     my $self = shift;
 
-    my $data = $self->_get_piddle
-      // return undef;
-
-    return undef if $data->isempty;
+    my $data = $self->_get_piddle;
 
     #  de-duplicate and aggregate weights if needed
     $data = $self->_deduplicate_piddle;
@@ -392,19 +349,20 @@ sub _mode {
 #  need to convert $p to fraction, or perhaps die if it is between 0 and 1
 sub percentile {
     my ($self, $p) = @_;
-    my $data = $self->_get_piddle
-      // return undef;
 
-    return undef if $data->isempty;
+    my $data = $self->_get_piddle;
+    return undef
+      if !defined $data or $data->isempty;
 
     $data = $self->_sort_piddle;
+
     my $cumsum = $self->_get_cumsum_weight_vector;
 
     my $target_wt = $self->sum_weights * ($p / 100);
 
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
 
-    return $data($idx)->sclr;
+    return $data($idx);
 }
 
 
