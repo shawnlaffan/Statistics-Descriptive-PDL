@@ -49,7 +49,7 @@ sub _standard_deviation {
 
 sub _median {
     my $self = shift;
-
+    
     my $piddle = $self->_sort_piddle;
     my $cumsum = $self->_get_cumsum_weight_vector;
 
@@ -109,17 +109,20 @@ sub _kurtosis {
 #  Uses same basic algorithm as PDL::pctl.
 sub percentile {
     my ($self, $p) = @_;
+
     my $piddle = $self->_get_piddle;
 
     return undef
       if !defined $piddle or $piddle->isempty;
+
+    #return $self->median if $p == 50;
 
     $piddle = $self->_deduplicate_piddle;
 
     my $wt_piddle = $self->_get_weights_piddle;
 
     my $cumsum = $self->_get_cumsum_weight_vector;
-    my $wt_sum = $wt_piddle->sum;
+    my $wt_sum = $self->sum_weights;
 
     use POSIX qw /floor/;
 
@@ -132,14 +135,14 @@ sub percentile {
     #  we need to interpolate if our target weight falls between two sets of weights
     #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
     my $fraction = ($target_wt - $cumsum($idx))->sclr;
-    if ($fraction < 1) {
+    if ($fraction > 0 && $fraction < 1) {
         my $lower_val = $piddle($idx)->sclr;
         my $upper_val = $piddle($idx+1)->sclr;
         my $val = $lower_val + $d * ($upper_val - $lower_val);
         return $val;
     }
 
-    return $piddle($idx);
+    return $piddle($idx)->sclr;
 }
 
 
