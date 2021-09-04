@@ -55,7 +55,7 @@ sub _median {
 
     my $target_wt = $self->sum_weights * 0.5;
     #  vsearch should be faster since it uses a binary search
-    my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
+    my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum);
 
     return ($piddle($idx) + $piddle($idx+1))->sclr / 2;
 }
