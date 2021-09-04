@@ -43,6 +43,10 @@ sub _make_caching_accessors {
                 return $self->{_cache}{$method}
                   if defined $self->{_cache}{$method};
  
+                my $piddle = $self->_get_piddle;
+                return undef
+                  if !defined $piddle or $piddle->isempty;
+
                 my $call_meth = "_$method";
                 my $val = $self->$call_meth;
                 use Scalar::Util qw /blessed/;
@@ -67,6 +71,11 @@ sub new {
     return $self;
 }
 
+sub available_stats {
+    my $self = shift;
+    my @methods = sort (@cache_methods, qw /percentile variance/);
+    return wantarray ? @methods : \@methods;
+}
 
 sub add_data {
     my $self = shift;
@@ -118,46 +127,36 @@ sub clear_cache {
 
 sub _count {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return $piddle->nelem;
+    return $self->_get_piddle->nelem;
 }
 
 sub _sum {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return $piddle->nelem ? $piddle->sum : undef;
+    return $self->_get_piddle->sum;
 }
 
 
 sub _min {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return $piddle->nelem ? $piddle->min : undef;
+    return $self->_get_piddle->min;
 }
 
 sub _max {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return $piddle->nelem ? $piddle->max : undef;
+    return $self->_get_piddle->max;
 }
 
 sub _mean {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return $piddle->nelem ? $piddle->average : undef;
+    return $self->_get_piddle->average;
 }
 
 
 sub _standard_deviation {
     my $self = shift;
 
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
+
     my $sd;
     my $n = $piddle->nelem;
     if ($n > 1) {
@@ -183,16 +182,14 @@ sub variance {
 
 sub _median {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-    return $piddle->nelem ? $piddle->median : undef;
+    return $self->_get_piddle->median;
 }
 
 
 sub _skewness {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
+
+    my $piddle = $self->_get_piddle;
 
     my $n = $piddle->nelem;
 
@@ -213,8 +210,7 @@ sub _skewness {
 
 sub _kurtosis {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
 
     my $n = $piddle->nelem;
 
@@ -245,8 +241,7 @@ sub _sample_range {
 
 sub _harmonic_mean {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
 
     return undef if $piddle->which->nelem != $piddle->nelem;
 
@@ -257,8 +252,7 @@ sub _harmonic_mean {
 
 sub _geometric_mean {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
 
     my $count = $self->count;
 
@@ -273,10 +267,7 @@ sub _geometric_mean {
 
 sub _mode {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
-
-    return undef if $piddle->isempty;
+    my $piddle = $self->_get_piddle;
     
     my $count  = $piddle->nelem;
     my $unique = $piddle->uniq;

@@ -573,6 +573,12 @@ sub test_mindex_maxdex {
     }
 }
 
+sub test_empty {
+    my $obj = $stats_class->new();
+    foreach my $stat ($obj->available_stats) {
+        is $obj->$stat, undef, "$stat has undefined result when no data have been added";
+    }
+}
 
 #  what happens when we add new data?
 #  Recycle the same data so mean, sd etc remain the same

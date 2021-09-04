@@ -45,6 +45,12 @@ sub main {
     return 0;
 }
 
+sub test_empty {
+    my $obj = $stats_class->new();
+    foreach my $stat ($obj->available_stats) {
+        is $obj->$stat, undef, "$stat has undefined result when no data have been added";
+    }
+}
 
 sub test_mode {
     my $object = $stats_class->new;
