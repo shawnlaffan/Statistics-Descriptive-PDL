@@ -84,6 +84,10 @@ sub skewness {
     my $sd   = $self->standard_deviation;
     my $wts  = $self->_get_weights_piddle;
     my $sumpow3 = ($wts * ((($data - $mean) / $sd) ** 3))->sum;
+    #  inplace seems not to be faster here.
+    #  Possibly PDL is smart enough to do it by default
+    #  in such cases
+    #my $sumpow3 = ($data - $mean)->inplace->divide($sd, 0)->pow(3)->mult($wts, 0)->sum;
     my $n = $self->sum_weights;
     my $correction = $n / ( ($n-1) * ($n-2) );
     my $skew = $correction * $sumpow3;
