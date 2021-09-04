@@ -36,7 +36,7 @@ sub new {
     my $class = ref($proto) || $proto;
 
     my $self = {
-        data_piddle    => undef,
+        piddle    => undef,
         weights_piddle => undef,
         data_type      => $data_type,
     };
@@ -70,9 +70,9 @@ sub add_data {
 
     # Take care of appending to an existing data set
     if ($has_existing_data) {
-        my $d_piddle = $self->_get_data_piddle;
+        my $d_piddle = $self->_get_piddle;
         $d_piddle    = $d_piddle->append ($data_piddle);
-        $self->_set_data_piddle ($d_piddle);
+        $self->_set_piddle ($d_piddle);
         my $w_piddle = $self->_get_weights_piddle;
         $w_piddle    = $w_piddle->append ($weights_piddle);
         $self->_set_weights_piddle ($w_piddle);
@@ -80,7 +80,7 @@ sub add_data {
         delete $self->{sorted};
     }
     else {
-        $self->_set_data_piddle ($data_piddle);
+        $self->_set_piddle ($data_piddle);
         $self->_set_weights_piddle ($weights_piddle);
     }
 
@@ -90,15 +90,15 @@ sub add_data {
     return $self->count;
 }
 
-sub _set_data_piddle {
-    my ($self, $data) = @_;
-    $self->{data_piddle} = PDL->pdl ($data);
-}
-
-sub _get_data_piddle {
-    my $self = shift;
-    return $self->{data_piddle};
-}
+#sub _set_piddle {
+#    my ($self, $data) = @_;
+#    $self->{data_piddle} = PDL->pdl ($data);
+#}
+#
+#sub _get_piddle {
+#    my $self = shift;
+#    return $self->{data_piddle};
+#}
 
 sub _set_weights_piddle {
     my ($self, $data) = @_;
@@ -119,7 +119,7 @@ sub _count {
 
 sub _sum {
     my $self = shift;
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
     return undef if $data->isempty;
     return ($data * $self->_get_weights_piddle)->sum;
@@ -136,7 +136,7 @@ sub _sum_weights {
 
 sub _min {
     my $self = shift;
-    my $piddle = $self->_get_data_piddle
+    my $piddle = $self->_get_piddle
       // return undef;
     return undef if $piddle->isempty;
     return $piddle->min;
@@ -144,7 +144,7 @@ sub _min {
 
 sub _max {
     my $self = shift;
-    my $piddle = $self->_get_data_piddle
+    my $piddle = $self->_get_piddle
       // return undef;
     return undef if $piddle->isempty;
     return $piddle->max;
@@ -162,7 +162,7 @@ sub min_weight {
 sub _mean {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->isempty;
@@ -175,7 +175,7 @@ sub _mean {
 sub _standard_deviation {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
     my $sd;
     my $n = $data->nelem;
@@ -202,7 +202,7 @@ sub variance {
 
 sub _median {
     my $self = shift;
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
     return undef if $data->isempty;
 
@@ -218,7 +218,7 @@ sub _median {
 
 sub _sort_piddle {
     my $self = shift;
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return $data if $self->{sorted};
@@ -228,7 +228,7 @@ sub _sort_piddle {
     my $sorted_data = $data($s);
     my $sorted_wts  = $wts($s);
     
-    $self->_set_data_piddle($sorted_data);
+    $self->_set_piddle($sorted_data);
     $self->_set_weights_piddle($sorted_wts);
 
     $self->{sorted} = 1;
@@ -242,12 +242,12 @@ sub _sort_piddle {
 #  maybe yvals related
 sub _deduplicate_piddle {
     my $self = shift;
-    my $piddle = $self->_get_data_piddle
+    my $piddle = $self->_get_piddle
       // return undef;
 
     my $unique = $piddle->uniq;
 
-    return $self->_get_data_piddle
+    return $self->_get_piddle
      if $unique->nelem == $piddle->nelem;
 
     if (!$self->{sorted}) {
@@ -276,12 +276,12 @@ sub _deduplicate_piddle {
         }
         $wts($j) += $wts_piddle($i);
     }
-    $self->_set_data_piddle($unique);
+    $self->_set_piddle($unique);
     $self->_set_weights_piddle($wts);
 
     delete $self->{_cache};
 
-    return $self->_get_data_piddle;
+    return $self->_get_piddle;
 }
 
 sub _get_cumsum_weight_vector {
@@ -296,7 +296,7 @@ sub _get_cumsum_weight_vector {
 sub _skewness {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->isempty;
@@ -313,7 +313,7 @@ sub _skewness {
 sub _kurtosis {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
     return undef if $data->isempty;
 
@@ -337,7 +337,7 @@ sub _sample_range {
 sub _harmonic_mean {
     my $self = shift;
     
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->which->nelem != $data->nelem;
@@ -352,7 +352,7 @@ sub _harmonic_mean {
 sub _geometric_mean {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->isempty;
@@ -371,7 +371,7 @@ sub _geometric_mean {
 sub _mode {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->isempty;
@@ -392,7 +392,7 @@ sub _mode {
 #  need to convert $p to fraction, or perhaps die if it is between 0 and 1
 sub percentile {
     my ($self, $p) = @_;
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->isempty;

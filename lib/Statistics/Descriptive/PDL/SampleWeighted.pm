@@ -34,7 +34,7 @@ sub _wt_type{PDL::long}
 sub _standard_deviation {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     my $sd;
@@ -54,7 +54,7 @@ sub _standard_deviation {
 
 sub _median {
     my $self = shift;
-    my $piddle = $self->_get_data_piddle
+    my $piddle = $self->_get_piddle
       // return undef;
 
     return undef if $piddle->isempty;
@@ -73,7 +73,7 @@ sub _median {
 sub _skewness {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
 
     return undef if $data->isempty;
@@ -96,7 +96,7 @@ sub _skewness {
 sub _kurtosis {
     my $self = shift;
 
-    my $data = $self->_get_data_piddle
+    my $data = $self->_get_piddle
       // return undef;
     return undef if $data->isempty;
 
@@ -120,7 +120,7 @@ sub _kurtosis {
 #  Uses same basic algorithm as PDL::pctl.
 sub percentile {
     my ($self, $p) = @_;
-    my $piddle = $self->_get_data_piddle
+    my $piddle = $self->_get_piddle
       // return undef;
 
     return undef if $piddle->isempty;

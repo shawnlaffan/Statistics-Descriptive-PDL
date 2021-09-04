@@ -33,7 +33,7 @@ sub test_equal_weights {
     #  "well behaved" data so medians and percentiles are not interpolated
     my @data = (0..100);  
     $object_pdl->add_data(\@data, [(0.6) x scalar @data]);
-    my $piddle = $object_pdl->_get_data_piddle;
+    my $piddle = $object_pdl->_get_piddle;
 
     my @methods = qw /
         mean

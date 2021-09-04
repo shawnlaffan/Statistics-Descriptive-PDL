@@ -57,13 +57,13 @@ sub test_mode {
     
     my $sd = $object->standard_deviation;
     
-    my $nelems = $object->_get_data_piddle->nelem;
+    my $nelems = $object->_get_piddle->nelem;
 
     is $nelems, scalar @data, 'correct number of elements to start with';
 
     is ($object->mode, 11, 'Mode is 11');
 
-    my $nelems_after = $object->_get_data_piddle->nelem;
+    my $nelems_after = $object->_get_piddle->nelem;
     
     is $nelems_after, 11, 'deduplication gives correct number of elements';
     
