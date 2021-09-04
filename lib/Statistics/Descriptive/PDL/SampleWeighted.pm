@@ -24,7 +24,7 @@ my @cache_methods = qw /
   median
   standard_deviation skewness kurtosis
 /;
-__PACKAGE__->_make_accessors( \@cache_methods );
+__PACKAGE__->_make_caching_accessors( \@cache_methods );
 
 
 

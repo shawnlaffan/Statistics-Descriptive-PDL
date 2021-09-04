@@ -27,7 +27,7 @@ my @cache_methods = qw /
   max min sample_range
   sum_weights
 /;
-__PACKAGE__->_make_accessors( \@cache_methods );
+__PACKAGE__->_make_caching_accessors( \@cache_methods );
 
 
 sub new {

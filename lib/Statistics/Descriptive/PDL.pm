@@ -25,9 +25,9 @@ my @cache_methods = qw /
   geometric_mean harmonic_mean
   max min sample_range
 /;
-__PACKAGE__->_make_accessors( \@cache_methods );
+__PACKAGE__->_make_caching_accessors( \@cache_methods );
 
-sub _make_accessors {
+sub _make_caching_accessors {
     my ( $pkg, $methods ) = @_;
  
     ## no critic
