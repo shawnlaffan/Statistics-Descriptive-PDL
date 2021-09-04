@@ -34,7 +34,7 @@ sub new {
 }
 
 
-sub _wt_type{PDL::double()}
+sub _wt_type{PDL::double}
 
 sub add_data {
     my ($self, $data, $weights) = @_;
@@ -252,32 +252,39 @@ sub _deduplicate_piddle {
      
     my $wts_piddle = $self->_get_weights_piddle;
 
+    if (!$self->{sorted}) {
+        $unique = $unique->qsort;
+    }
+
     $piddle = $self->_sort_piddle;
 
-    my (@data, @wts);
-    
-    push @data, $piddle(0)->sclr;
-    push @wts,  $wts_piddle(0)->sclr;
+    my $wts = $unique->zeroes ($wts_piddle->type, $unique->nelem);
+##    my $ww = zeroes (PDL::Types::long, $unique->list);
+##    local $| = 1;
+#say STDERR "TYPE OF WTS PIDDLE IS " . PDL::type ($wts_piddle);
+#say STDERR "TYPE OF WTS IS " . PDL::type ($wts);
+##say STDERR "TYPE OF WW IS "  . PDL::type ($ww);
+#say STDERR "EXPECT TYPE OF WTS IS " . $self->_wt_type;
+
     my $last_val = $piddle(0);
 
     #  could use a map into a hash, but this avoids
     #  stringification and loss of precision
     #  (not that that should cause too many issues for most data)
-    #  Should be able to use ->setops for this process to reduce looping
-    #  when there are not many dups in large data sets
+    #  Should try to reduce looping when there are
+    #  not many dups in large data sets
+    my $j = 0;  #  index into deduplicated piddle
+    my $sum = 0;
     foreach my $i (1..$piddle->nelem-1) {
         my $val = $piddle($i);
-        if ($val == $last_val) {
-            $wts[-1] += $wts_piddle($i)->sclr;
-        }
-        else {
+        if ($val != $last_val) {
+            $j++;
             $last_val = $val;
-            push @data, $last_val->sclr;
-            push @wts,  $wts_piddle($i)->sclr;
         }
+        $wts($j) += $wts_piddle($i);
     }
-    $self->_set_data_piddle(\@data);
-    $self->_set_weights_piddle(\@wts);
+    $self->_set_data_piddle($unique);
+    $self->_set_weights_piddle($wts);
 
     return $self->_get_data_piddle;
 }
