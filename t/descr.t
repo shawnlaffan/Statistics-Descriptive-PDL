@@ -45,6 +45,16 @@ sub main {
 }
 
 
+sub test_mode {
+    my $object = $stats_class->new;
+    
+    my @data = (1..10, 5, 5, 2, 3, 2, 3, 5);
+    $object->add_data(\@data);
+    
+    is ($object->mode, 5, 'Mode is 5');
+}
+
+
 sub test_same_as_stats_descr_full {
     my $object_pdl = $stats_class->new;
     my $object_sdf = Statistics::Descriptive::Full->new;
