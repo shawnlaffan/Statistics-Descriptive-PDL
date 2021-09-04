@@ -20,7 +20,7 @@ our $VERSION = '0.02';
 
 use parent 'Statistics::Descriptive::PDL::Weighted';
 
-sub _wt_type{PDL::long()}
+sub _wt_type{PDL::long}
 
 
 sub standard_deviation {
