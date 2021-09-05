@@ -18,6 +18,7 @@ WriteMakefile(
         'Test::More' => 0,
         'Statistics::Descriptive' => "3.06",
         'rlib' => "0",
+        'Scalar::Util' => "0",
     },
     PREREQ_PM => {
         #  PDL:: versions should be able to go lower, but need to start somewhere
