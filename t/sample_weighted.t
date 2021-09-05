@@ -60,8 +60,10 @@ sub test_wikipedia_percentile_example {
     );
 
     for my $p (sort {$a <=> $b} keys %exp) {
-        is $unweighted->percentile($p), $exp{$p}, "interpolated pctl $p, unweighted, doubled data";
-        is $weighted->percentile($p),   $exp{$p}, "interpolated pctl $p, weighted, doubled data";
+        is int(1000 * $unweighted->percentile($p)) / 1000,  #  handle precision issues on some testers 
+           $exp{$p}, "interpolated pctl $p, unweighted, doubled data";
+        is $weighted->percentile($p),
+           $exp{$p}, "interpolated pctl $p, weighted, doubled data";
     
         #diag $p . ' ' . $weighted->percentile($p);
     }
