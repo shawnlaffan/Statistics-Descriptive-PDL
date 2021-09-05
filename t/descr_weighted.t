@@ -649,13 +649,17 @@ sub test_add_new_data_non_unity_wts {
     my $wt2 = $stat2->_get_weights_piddle;
     
     is $wt1->sum->sclr, $wt2->sum->sclr, 'sum of weights';
-    
-    # TEST
-    is_deeply (\%obj2, \%obj1, 'stats consistent after adding new data with doubled wts');
+
+    my $precision = 1e-12;    
+    foreach my $key (keys %obj1) {
+        ok abs ($obj1{$key} - $obj2{$key}) < $precision, "obj1 and 2: $key within precision $precision"; 
+    }
     
     {
         delete local $obj1{count};
         delete local $obj3{count};
-        is_deeply (\%obj3, \%obj1, 'stats consistent after adding new data with non-integer wts');
+        foreach my $key (keys %obj1) {
+            ok abs ($obj1{$key} - $obj3{$key}) < $precision, "obj1 and 3: $key within precision $precision"; 
+        }
     }
 }
