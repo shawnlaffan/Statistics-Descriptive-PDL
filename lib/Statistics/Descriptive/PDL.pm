@@ -19,7 +19,7 @@ my $has_PDL_stats_basic = $@ ? undef : 1;
 #  to hide the piddle from the caller to avoid arbitrary changes
 #  being applied to it.
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 our $Tolerance = 0.0;  #  for compatibility with Stats::Descr, but not used here
 
@@ -350,7 +350,7 @@ Statistics::Descriptive using PDL as the back-end
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 

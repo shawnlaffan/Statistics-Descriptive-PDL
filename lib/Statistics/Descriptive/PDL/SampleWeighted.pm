@@ -18,7 +18,7 @@ use PDL::NiceSlice;
 
 ## no critic (ProhibitExplicitReturnUndef)
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use parent 'Statistics::Descriptive::PDL::Weighted';
 
@@ -160,7 +160,7 @@ Statistics::Descriptive::PDL::SampleWeighted - Sample weighted descriptive stati
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 

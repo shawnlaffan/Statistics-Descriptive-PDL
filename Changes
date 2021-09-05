@@ -1,5 +1,8 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.05    2021-09-05
+        Missed one test failure in 0.04.
+
 0.04    2021-09-05
         Fix several CPAN test failures.  Thanks to SREZIC for reporting.
 
