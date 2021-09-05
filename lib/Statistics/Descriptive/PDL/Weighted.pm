@@ -106,8 +106,8 @@ sub _get_weights_piddle {
 
 sub _count {
     my $self = shift;
-    my $piddle = $self->_get_weights_piddle
-      // return undef;
+    my $piddle = $self->_get_weights_piddle;
+    return undef if !defined $piddle;
     return $piddle->sum;
 }
 
@@ -179,8 +179,9 @@ sub _median {
 
 sub _sort_piddle {
     my $self = shift;
-    my $data = $self->_get_piddle
-      // return undef;
+    my $data = $self->_get_piddle;
+
+    return undef if !defined $data;
 
     return $data if $self->{sorted};
 
@@ -203,8 +204,9 @@ sub _sort_piddle {
 #  maybe yvals related
 sub _deduplicate_piddle {
     my $self = shift;
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
+    
+    return undef if !defined $piddle;
 
     my $unique = $piddle->uniq;
 
