@@ -407,18 +407,29 @@ Unlike Statistics::Descriptive::PDL, you cannot pass a single flat array
 since odd things might happen if we convert it to a hash and the values
 are multidimensional.
 
-Multidimensional data are flattened into a singe dimensional array.
+Since the L<PDL::pdl> function is used to process the data and weights you should be able to
+specify anything pdl accepts as valid.
 
-Since we use the pdl function to process the data and weights you should be able to
-specify anything pdl accepts as valid, but take care that the number of
-weights matches the values.
+An exception is raised the weights are <= 0, or are not the same size as the data.
+
+
+=item sum_wts
+
+Sum of the weights vector.
+
+=item Statistical methods
 
 Most of the methods should need no explanation here,
 except to note that the standard_deviation, skewness and kurtosis 
 use the biased methods.  This is because one cannot guarantee the data are sample counts.
-Use Statistics::Descriptive::PDL::SampleWeighted when your weights are counts
+The same applies to the median and percentiles.  The median uses a centre of mass calculation, and the
+percentiles using analogous approach.  This is because the weights are not guaranteed
+to be integers and so there is no sense interpolating.
+
+Use L<Statistics::Descriptive::PDL::SampleWeighted> when your weights are counts
 and you need the unbiased methods.  
 
+The iqr is the inter-quartile range, calculated as the difference of the 75th and 25th percentiles. 
 
 =item geometric_mean
 
@@ -442,12 +453,7 @@ and you need the unbiased methods.
 
 =item variance
 
-=item count
-
-=item sum_wts
-
-Sum of the weights vector.
- 
+=item count 
 
 =item skewness
 
@@ -457,14 +463,7 @@ Sum of the weights vector.
 
 =item percentile (45)
 
-The percentile calculation differs from Statistics::Descriptive
-and Statistics::Descriptive::PDL.
-
-TODO:  Explain how it differs
-
 =item iqr
-
-Inter-quartile range (the difference of the 75th and 25th percentiles).
 
 =head2 Not yet implemented, and possibly won't be.
 

@@ -438,7 +438,7 @@ C<https://github.com/shawnlaffan/Statistics-Descriptive-PDL/issues>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2015 Shawn Laffan.
+Copyright 2021 Shawn Laffan.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a

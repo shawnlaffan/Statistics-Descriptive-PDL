@@ -185,8 +185,8 @@ Version 0.02
 =head1 DESCRIPTION
 
 This module provides basic functions used in descriptive statistics
-using weighted values.  Inherits from S::D::PDL::Weighted, with the
-key difference that the weights are forced to be integers.
+using weighted values.  Inherits from L<Statistics::Descriptive::PDL::Weighted>,
+with the key difference that the weights are forced to be integers.
 
 Variance, skewness and kurtosis all use the unbiased calculations.  
 The median and percentiles are calculated using interpolation,
@@ -201,22 +201,12 @@ Create a new statistics object.  Takes no arguments.
 
 =item add_data (\%data)
 
-=item add_data ([1,2,3,4], [0.5,1,0.1,2)
+=item add_data ([1,2,3,4], [5,1,1,2)
+
+Same as L<Statistics::Descriptive::PDL::Weighted> except that non-integer weights
+will be converted to integer using PDL's rules.  
 
 Add data to the stats object.  Appends to any existing data.
-
-If a hash reference is passed then the keys are treated as the numeric data values,
-with the hash values the weights.
-
-Unlike Statistics::Descriptive::PDL, you cannot pass a flat array
-since odd things might happen if we convert it to a hash and the values
-are multidimensional.
-
-Multidimensional data are flattened into a singe dimensional array.
-
-Since we use the pdl function to process the data and weights you should be able to
-specify anything pdl accepts as valid, but take care that the number of
-weights matches the values.
 
 
 
@@ -236,7 +226,7 @@ C<https://github.com/shawnlaffan/Statistics-Descriptive-PDL/issues>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2015 Shawn Laffan.
+Copyright 2021 Shawn Laffan.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a
