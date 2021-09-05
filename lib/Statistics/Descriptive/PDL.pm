@@ -313,6 +313,10 @@ sub percentile {
 
     my $pctl = $self->_percentile($p);
 
+    if (blessed $pctl && $pctl->isa('PDL')) {
+        $pctl = $pctl->sclr;
+    }
+
     if (fmod ($p, 5) == 0) {
         $self->{_cache}{percentile}{$p} = $pctl;
     }
@@ -323,7 +327,7 @@ sub percentile {
 sub _percentile {
     my ($self, $p) = @_;
 
-    return $self->_get_piddle->pct($p / 100)->sclr;
+    return $self->_get_piddle->pct($p / 100);
 }
 
 
