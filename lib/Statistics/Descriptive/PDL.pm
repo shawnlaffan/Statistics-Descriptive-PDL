@@ -382,6 +382,14 @@ Appends to any existing data.
 
 Multidimensional data are flattened into a singe dimensional array.
 
+=item clear_cache
+
+Clears any cached results on an object.
+
+=item available_stats
+
+Method to return a list of the available statistics.
+
 =item geometric_mean
 
 =item harmonic_mean
