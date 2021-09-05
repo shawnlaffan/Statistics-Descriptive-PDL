@@ -39,11 +39,11 @@ sub _standard_deviation {
     my $data = $self->_get_piddle;
     
     my $wts = $self->_get_weights_piddle;
-    my $n   = $wts->sum->sclr;
+    my $n   = $wts->sum;
 
     return 0 if $n == 1;
 
-    my $var = ((($data ** 2) * $wts)->sum - $n * $self->mean ** 2)->sclr;
+    my $var = ((($data ** 2) * $wts)->sum - $n * $self->mean ** 2);
 
     return $var > 0 ? sqrt ($var / ($n - 1)) : 0;
 }
@@ -62,7 +62,7 @@ sub _median {
     #  if the target weight is "on a boundary" between
     #  two values then we need to interpolate
     my $median
-      = $target_wt == $cumsum($idx)->sclr
+      = $target_wt == $cumsum->at($idx)
       ? ($piddle($idx) + $piddle($idx+1)) / 2
       : $piddle($idx);
 
@@ -136,10 +136,10 @@ sub _percentile {
 
     #  we need to interpolate if our target weight falls between two sets of weights
     #  e.g. target is 1.3, but the cumulative weights are [1,2] or [1,5]
-    my $fraction = ($target_wt - $cumsum($idx))->sclr;
+    my $fraction = $target_wt - $cumsum->at($idx);
     if ($fraction > 0 && $fraction < 1) {
-        my $lower_val = $piddle($idx)->sclr;
-        my $upper_val = $piddle($idx+1)->sclr;
+        my $lower_val = $piddle->at($idx);
+        my $upper_val = $piddle->at($idx+1);
         my $val = $lower_val + $d * ($upper_val - $lower_val);
         return $val;
     }

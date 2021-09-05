@@ -322,7 +322,7 @@ sub _mode {
     $data = $self->_deduplicate_piddle;
 
     my $wts = $self->_get_weights_piddle;
-    my $mode = $data($wts->maximum_ind)->sclr;
+    my $mode = $data->at($wts->maximum_ind);
     if ($mode > $data->max) {
         #  PDL returns strange numbers when distributions are flat
         $mode = undef;

@@ -169,10 +169,10 @@ sub _standard_deviation {
     my $n = $piddle->nelem;
     if ($n > 1) {
         if ($has_PDL_stats_basic) {
-            $sd = $piddle->stdv_unbiased->sclr;
+            $sd = $piddle->stdv_unbiased;
         }
         else {
-            my $var = (($piddle ** 2)->sum - $n * $self->mean ** 2)->sclr;
+            my $var = (($piddle ** 2)->sum - $n * $self->mean ** 2);
             $sd = $var > 0 ? sqrt ($var / ($n - 1)) : 0;
         }
     }
@@ -224,7 +224,7 @@ sub _kurtosis {
 
     return undef if $n < 4;
 
-    return $piddle->kurt_unbiased->sclr 
+    return $piddle->kurt_unbiased
       if $has_PDL_stats_basic;
 
     #  do it ourselves

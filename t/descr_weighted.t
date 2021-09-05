@@ -588,7 +588,7 @@ sub test_add_new_data {
     foreach my $meth (@methods) { #  run some methods
         $stat1->$meth;
     }
-    my $wt1a = $stat1->_get_weights_piddle->sum->sclr;
+    #my $wt1a = $stat1->_get_weights_piddle->sum;
 
     $stat1->add_data(\@data2, [(1) x scalar @data2]);     #  add new data
     foreach my $meth (@methods) { #  re-run some methods
@@ -603,7 +603,7 @@ sub test_add_new_data {
     my $wt1 = $stat1->_get_weights_piddle;
     my $wt2 = $stat2->_get_weights_piddle;
 
-    is $wt1->sum->sclr, $wt2->sum->sclr, 'sum of weights';
+    is $wt1->sum, $wt2->sum, 'sum of weights';
     
     # TEST
     is_deeply (\%obj2, \%obj1, 'stats consistent after adding new data');
@@ -645,10 +645,9 @@ sub test_add_new_data_non_unity_wts {
         $obj3{$meth} = $stat3->$meth;
     }
 
-    my $wt1 = $stat1->_get_weights_piddle;
-    my $wt2 = $stat2->_get_weights_piddle;
-    
-    is $wt1->sum->sclr, $wt2->sum->sclr, 'sum of weights';
+    my $wt_sum1 = $stat1->sum_weights;
+    my $wt_sum2 = $stat2->sum_weights;
+    is $wt_sum1, $wt_sum2, 'sums of weights match';
 
     my $precision = 1e-12;    
     foreach my $key (keys %obj1) {
