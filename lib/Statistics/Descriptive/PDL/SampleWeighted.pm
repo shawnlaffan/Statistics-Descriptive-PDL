@@ -156,8 +156,7 @@ __END__
 
 =head1 NAME
 
-Statistics::Descriptive::PDL::SampleWeighted -
-Sample weighted descriptive statistics using PDL as the back-end
+Statistics::Descriptive::PDL::SampleWeighted - Sample weighted descriptive statistics using PDL as the back-end
 
 =head1 VERSION
 
