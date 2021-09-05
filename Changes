@@ -1,5 +1,8 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.04    2021-09-05
+        Fix several CPAN test failures.  Thanks to SREZIC for reporting.
+
 0.03    2021-09-05
         Add repo info to Makefile.PL
 
