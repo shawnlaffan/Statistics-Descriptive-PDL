@@ -1,11 +1,11 @@
 Changes
 cpanfile
 etc/bench.pl
+etc/experiment/Util/Makefile.PL
+etc/experiment/Util/util.pd
 etc/for_profiling.pl
 lib/Statistics/Descriptive/PDL.pm
 lib/Statistics/Descriptive/PDL/SampleWeighted.pm
-lib/Statistics/Descriptive/PDL/Util/Makefile.PL
-lib/Statistics/Descriptive/PDL/Util/util.pd
 lib/Statistics/Descriptive/PDL/Weighted.pm
 LICENSE
 Makefile.PL
