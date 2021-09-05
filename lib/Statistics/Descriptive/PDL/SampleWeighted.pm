@@ -14,7 +14,9 @@ use PDL::NiceSlice;
 
 #  We could inherit from PDL::Objects, but in this case we want
 #  to hide the piddle from the caller to avoid arbitrary changes
-#  being applied to it. 
+#  being applied to it.
+
+## no critic (ProhibitExplicitReturnUndef)
 
 our $VERSION = '0.02';
 

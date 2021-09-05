@@ -16,6 +16,8 @@ use PDL::NiceSlice;
 #  to hide the piddle from the caller to avoid arbitrary changes
 #  being applied to it. 
 
+## no critic (ProhibitExplicitReturnUndef)
+
 our $VERSION = '0.02';
 
 use parent 'Statistics::Descriptive::PDL';
