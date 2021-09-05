@@ -2,7 +2,6 @@ Changes
 cpanfile
 etc/bench.pl
 etc/for_profiling.pl
-ignore.txt
 lib/Statistics/Descriptive/PDL.pm
 lib/Statistics/Descriptive/PDL/SampleWeighted.pm
 lib/Statistics/Descriptive/PDL/Util/Makefile.PL
