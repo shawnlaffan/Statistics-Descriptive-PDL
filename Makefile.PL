@@ -27,4 +27,16 @@ WriteMakefile(
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Statistics-Descriptive-PDL-*' },
+    META_MERGE => {
+        'meta-spec' => { version => 2 },
+        resources => {
+            repository => {
+                type => 'git',
+                url  => 'https://github.com/shawnlaffan/Statistics-Descriptive-PDL',
+            },
+            bugtracker => {
+                web => 'https://github.com/shawnlaffan/Statistics-Descriptive-PDL/issues/',
+            },
+        },
+    },
 );
