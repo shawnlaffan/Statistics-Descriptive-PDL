@@ -403,7 +403,7 @@ Add data to the stats object.  Appends to any existing data.
 If a hash reference is passed then the keys are treated as the numeric data values,
 with the hash values the weights.
 
-Unlike Statistics::Descriptive::PDL, you cannot pass a flat array
+Unlike Statistics::Descriptive::PDL, you cannot pass a single flat array
 since odd things might happen if we convert it to a hash and the values
 are multidimensional.
 
@@ -412,6 +412,13 @@ Multidimensional data are flattened into a singe dimensional array.
 Since we use the pdl function to process the data and weights you should be able to
 specify anything pdl accepts as valid, but take care that the number of
 weights matches the values.
+
+Most of the methods should need no explanation here,
+except to note that the standard_deviation, skewness and kurtosis 
+use the biased methods.  This is because one cannot guarantee the data are sample counts.
+Use Statistics::Descriptive::PDL::SampleWeighted when your weights are counts
+and you need the unbiased methods.  
+
 
 =item geometric_mean
 
@@ -435,9 +442,6 @@ weights matches the values.
 
 =item variance
 
-The above should need no explanation, except that they
-use the unbiased methods where appropriate, as per Statistics::Descriptive.
-
 =item count
 
 =item sum_wts
@@ -449,11 +453,6 @@ Sum of the weights vector.
 
 =item kurtosis
 
-Skewness and kurtosis to match that of MS Excel.
-If you are used to R then these are the same as type=2
-in e1071::skewness and e1071::kurtosis.
-
-
 =item percentile (10)
 
 =item percentile (45)
@@ -462,6 +461,10 @@ The percentile calculation differs from Statistics::Descriptive
 and Statistics::Descriptive::PDL.
 
 TODO:  Explain how it differs
+
+=item iqr
+
+Inter-quartile range (the difference of the 75th and 25th percentiles).
 
 =head2 Not yet implemented, and possibly won't be.
 
@@ -493,7 +496,7 @@ C<https://github.com/shawnlaffan/Statistics-Descriptive-PDL/issues>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2015 Shawn Laffan.
+Copyright 2021 Shawn Laffan.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a

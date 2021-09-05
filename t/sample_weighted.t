@@ -11,13 +11,6 @@ use lib 't/lib';
 use Statistics::Descriptive::PDL;
 use Statistics::Descriptive::PDL::SampleWeighted;
 
-#use PDL::Lite;
-#use PDL::NiceSlice;
-#use PDL::Stats;
-#eval 'use PDL::Stats';
-#if ($@) {
-#    plan skip_all => 'PDL::Stats not installed';
-#}
 
 use Scalar::Util qw /blessed/;
 
@@ -100,6 +93,9 @@ sub test_wikipedia_percentile_example {
     is ($weighted->percentile(75),   33.75, 'interpolated pctl 75, weighted');
     is $weighted->percentile(50), 27.5, '50th percentile';
     is $weighted->percentile(50), $weighted->median, 'median same as 50th percentile';
+
+    is $weighted->iqr, 12.5, 'iqr as expected (1)';
+    is $weighted->iqr, $weighted->percentile(75) - $weighted->percentile(25), 'iqr as expected (2)';
 
 }
 

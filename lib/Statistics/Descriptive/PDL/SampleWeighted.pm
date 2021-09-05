@@ -187,8 +187,9 @@ Version 0.02
 This module provides basic functions used in descriptive statistics
 using weighted values.  Inherits from S::D::PDL::Weighted, with the
 key difference that the weights are forced to be integers.
+
 Variance, skewness and kurtosis all use the unbiased calculations.  
-The median and percentiles are then calculated using interpolation,
+The median and percentiles are calculated using interpolation,
 analogous to the unweighted case where values are repeated by the weights.  
 
 

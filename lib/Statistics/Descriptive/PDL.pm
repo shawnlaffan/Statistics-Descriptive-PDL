@@ -25,6 +25,7 @@ my @cache_methods = qw /
   mean standard_deviation skewness kurtosis
   geometric_mean harmonic_mean
   max min sample_range
+  iqr
 /;
 __PACKAGE__->_make_caching_accessors( \@cache_methods );
 
@@ -304,6 +305,12 @@ sub percentile {
     return $piddle->pct($p / 100);
 }
 
+sub _iqr {
+    my $self = shift;
+    $self->percentile(75) - $self->percentile(25);
+}
+
+
 1;
 
 __END__
@@ -394,8 +401,13 @@ in e1071::skewness and e1071::kurtosis.
 =item percentile (45)
 
 The percentile calculation differs from Statistics::Descriptive in that it uses
-linear interpolation to determine the values, and does not
+linear interpolation to determine the values, and thus does not
 return the exact same values as the input data.
+
+=item iqr
+
+The inter-quartile range.  A convenience method to calculate the
+difference between the 75th and 25th percentile.
 
 =head2 Not yet implemented, and possibly won't be.
 

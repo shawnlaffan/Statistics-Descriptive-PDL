@@ -284,21 +284,6 @@ sub test_frequency_distribution {
 #  here is where we deviate from S::D::F
 sub test_percentiles {
     my $stat;
-    ## test #10 and #11
-    ## Test the percentile function and caching
-    #$stat = $stats_class->new();
-    #$stat->add_data([-5,-2,4,7,7,18],[(1)x6]);
-    ###Check algorithm
-    ## TEST
-    #is ($stat->percentile(50),
-    #    5.5,
-    #    "percentile function and caching - 1",
-    #);
-    ## TEST
-    #is ($stat->percentile(25),
-    #    -0.5,
-    #    "percentile function and caching - 2",
-    #);
     $stat = $stats_class->new();
     $stat->add_data([0..100], [(1)x101]);
     ##Check algorithm
@@ -312,6 +297,9 @@ sub test_percentiles {
         25,
         "percentile function and caching - 25% of 0..100",
     );
+    is $stat->iqr, 50, 'iqr as expected (1)';
+    is $stat->iqr, $stat->percentile(75)-$stat->percentile(25), 'iqr as expected (2)';
+
 }
 
 

@@ -281,6 +281,10 @@ sub test_percentiles {
         25,
         "percentile function and caching - 25% of 0..100",
     );
+    
+    is $stat->iqr, 50, 'iqr as expected (1)';
+    is $stat->iqr, $stat->percentile(75)-$stat->percentile(25), 'iqr as expected (2)';
+    
 }
 
 #  do we want this?
