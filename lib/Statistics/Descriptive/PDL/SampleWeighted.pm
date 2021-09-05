@@ -107,7 +107,7 @@ sub _kurtosis {
 
 
 #  Uses same basic algorithm as PDL::pctl.
-sub percentile {
+sub _percentile {
     my ($self, $p) = @_;
 
     my $piddle = $self->_get_piddle;
@@ -142,7 +142,7 @@ sub percentile {
         return $val;
     }
 
-    return $piddle($idx)->sclr;
+    return $piddle->at($idx);
 }
 
 

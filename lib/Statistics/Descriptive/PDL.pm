@@ -4,6 +4,7 @@ use 5.010;
 use strict;
 use warnings;
 use Scalar::Util qw /blessed/;
+use POSIX qw /fmod/;
 
 #  avoid loading too much, especially into our name space
 use PDL::Lite '2.012';
@@ -293,17 +294,37 @@ sub _mode {
     return $mode;
 }
 
-#  need to convert $p to fraction, or perhaps die if it is betwen 0 and 1
+#  caching wrapper
+#  need to convert $p to fraction, or perhaps die if it is between 0 and 1
+#  hard-coded cache percentiles not ideal
 sub percentile {
     my ($self, $p) = @_;
-    my $piddle = $self->_get_piddle
-      // return undef;
+    my $piddle = $self->_get_piddle;
 
-    my $count = $piddle->nelem;
-    
-    return undef if !$count;
-    return $piddle->pct($p / 100);
+    return undef
+      if !defined $piddle || $piddle->nelem == 0;
+
+    if (fmod ($p, 5) == 0) {
+        return $self->{_cache}{percentile}{$p}
+          if defined $self->{_cache}{percentile}{$p};
+    }
+
+    my $pctl = $self->_percentile($p);
+
+    if (fmod ($p, 5) == 0) {
+        $self->{_cache}{percentile}{$p} = $pctl;
+    }
+
+    return $pctl;
 }
+
+sub _percentile {
+    my ($self, $p) = @_;
+
+    return $self->_get_piddle->pct($p / 100)->sclr;
+}
+
+
 
 sub _iqr {
     my $self = shift;

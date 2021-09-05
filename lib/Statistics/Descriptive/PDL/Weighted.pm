@@ -328,7 +328,7 @@ sub _mode {
 }
 
 #  need to convert $p to fraction, or perhaps die if it is between 0 and 1
-sub percentile {
+sub _percentile {
     my ($self, $p) = @_;
 
     my $data = $self->_get_piddle;
@@ -343,7 +343,7 @@ sub percentile {
 
     my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
 
-    return $data($idx);
+    return $data->at($idx);
 }
 
 
