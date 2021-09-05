@@ -1,5 +1,8 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.06    2021-09-06
+        Track down more sclr calls to work on PDL earlier than 2.056
+
 0.05    2021-09-05
         Missed one test failure in 0.04.
 
