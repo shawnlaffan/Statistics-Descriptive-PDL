@@ -18,7 +18,7 @@ use PDL::NiceSlice;
 
 ## no critic (ProhibitExplicitReturnUndef)
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use parent 'Statistics::Descriptive::PDL';
 

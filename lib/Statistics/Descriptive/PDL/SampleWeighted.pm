@@ -18,7 +18,7 @@ use PDL::NiceSlice;
 
 ## no critic (ProhibitExplicitReturnUndef)
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use parent 'Statistics::Descriptive::PDL::Weighted';
 
@@ -156,8 +156,8 @@ __END__
 
 =head1 NAME
 
-Statistics::Descriptive::PDL::SampleWeighted - A close to drop-in replacement for
-Statistics::Descriptive::Weighted using PDL as the back-end
+Statistics::Descriptive::PDL::SampleWeighted -
+Sample weighted descriptive statistics using PDL as the back-end
 
 =head1 VERSION
 
