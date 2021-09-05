@@ -390,6 +390,8 @@ using weighted values.
 
 =head1 METHODS
 
+=over
+
 =item new
 
 Create a new statistics object.  Takes no arguments.  
@@ -465,9 +467,13 @@ The iqr is the inter-quartile range, calculated as the difference of the 75th an
 
 =item iqr
 
+=back
+
 =head2 Not yet implemented, and possibly won't be.
 
 Any of the trimmed functions, frequency functions and some others.
+
+=over
 
 =item least_squares_fit
 
@@ -478,6 +484,8 @@ Any of the trimmed functions, frequency functions and some others.
 =item mindex
 
 =item maxdex
+
+=back
 
 =head1 AUTHOR
 

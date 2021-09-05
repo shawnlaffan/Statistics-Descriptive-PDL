@@ -1,5 +1,7 @@
 package Statistics::Descriptive::PDL;
 
+## no critic (ProhibitExplicitReturnUndef)
+
 use 5.010;
 use strict;
 use warnings;
@@ -365,6 +367,8 @@ This module provides basic functions used in descriptive statistics.
 
 =head1 METHODS
 
+=over
+
 =item new
 
 Create a new statistics object.  Takes no arguments.
@@ -430,9 +434,13 @@ return the exact same values as the input data.
 The inter-quartile range.  A convenience method to calculate the
 difference between the 75th and 25th percentile.
 
+=back
+
 =head2 Not yet implemented, and possibly won't be.
 
 Any of the trimmed functions, frequency functions and some others.
+
+=over
 
 =item least_squares_fit
 
@@ -443,6 +451,8 @@ Any of the trimmed functions, frequency functions and some others.
 =item mindex
 
 =item maxdex
+
+=back
 
 =head1 AUTHOR
 

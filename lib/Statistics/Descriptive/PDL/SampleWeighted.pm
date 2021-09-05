@@ -195,6 +195,8 @@ analogous to the unweighted case where values are repeated by the weights.
 
 =head1 METHODS
 
+=over
+
 =item new
 
 Create a new statistics object.  Takes no arguments.  
@@ -208,7 +210,7 @@ will be converted to integer using PDL's rules.
 
 Add data to the stats object.  Appends to any existing data.
 
-
+=back
 
 =head1 AUTHOR
 

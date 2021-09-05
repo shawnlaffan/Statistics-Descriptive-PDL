@@ -22,3 +22,14 @@ x\.tmp
 pm_to_blib
 blib
 not_yet
+
+^nyt
+nytprof.out
+
+x.txt
+\.gitignore
+
+xt/.perlcritic-history
+
+.travis.yml
+appveyor.yml

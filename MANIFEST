@@ -1,8 +1,12 @@
-.travis.yml
-appveyor.yml
 Changes
+cpanfile
+etc/bench.pl
+etc/for_profiling.pl
 ignore.txt
 lib/Statistics/Descriptive/PDL.pm
+lib/Statistics/Descriptive/PDL/SampleWeighted.pm
+lib/Statistics/Descriptive/PDL/Util/Makefile.PL
+lib/Statistics/Descriptive/PDL/Util/util.pd
 lib/Statistics/Descriptive/PDL/Weighted.pm
 LICENSE
 Makefile.PL
@@ -16,8 +20,7 @@ t/descr_weighted.t
 t/equal_weights.t
 t/lib/Utils.pm
 t/mode.t
-t/weighted_and_interpolated.t
-xt/.perlcritic-history
+t/sample_weighted.t
 xt/01-has_versions.t
 xt/03-has_pod.t
 xt/04-pod-coverage.t
