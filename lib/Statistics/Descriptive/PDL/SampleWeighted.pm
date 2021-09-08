@@ -133,7 +133,7 @@ sub _percentile {
     my $k = floor $target_wt;
     my $d = $target_wt - $k;
 
-    my $idx = ($k_piddle_cache{$k} //= PDL->pdl($k))->vsearch_insert_leftmost($cumsum)->at(0);
+    my $idx = ($k_piddle_cache{$k} //= PDL->pdl(PDL::indx(), [$k]))->vsearch_insert_leftmost($cumsum)->at(0);
 
     if (scalar keys %k_piddle_cache > 10000) {
         #  Reset if we get too many
