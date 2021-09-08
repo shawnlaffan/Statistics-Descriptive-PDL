@@ -208,6 +208,8 @@ sub _deduplicate_piddle {
     
     return undef if !defined $piddle;
 
+    return $piddle if $self->{_cache}{deduplicated};
+
     my $unique = $piddle->uniq;
 
     return $self->_get_piddle
@@ -240,6 +242,7 @@ sub _deduplicate_piddle {
     $self->_set_weights_piddle(\@wts);
 
     delete $self->{_cache};
+    $self->{_cache}{deduplicated} = 1;
 
     return $self->_get_piddle;
 }

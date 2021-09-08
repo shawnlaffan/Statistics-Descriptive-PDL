@@ -1,6 +1,7 @@
 use 5.010;
 use strict;
 use warnings;
+use List::Util qw /pairs/;
 
 use Benchmark qw/cmpthese/;
 
@@ -12,7 +13,7 @@ use constant FEEDBACK => 0;
 
 
 my $n_iters   = 1000;
-my $data_size = 1;
+my $data_size = 10000;
 
 my (@data, @wts, @flat_data);
 
@@ -30,12 +31,20 @@ my $stats_desc = Statistics::Descriptive::Full->new;
 $stats_desc->add_data (\@flat_data);
 
 my @methods = qw /mean standard_deviation skewness kurtosis median mode/;
+#  percentiles cache some
+my @methods_with_args = (
+    'percentile',  1,
+    'percentile', 10,
+    'percentile', 32,
+    'percentile', 84.2,
+    'percentile', 95,
+);
 
 stats_pdl();
 stats_desc();
 
 say "Running with data size $data_size, calling stats $n_iters times"; 
-cmpthese (-2, {
+cmpthese (100, {
     stats_pdl  => \&stats_pdl,
     stats_desc => \&stats_desc,
 });
@@ -48,6 +57,10 @@ sub stats_pdl {
     for my $i (0..$n_iters) {
         foreach my $method (@methods) {
             $results{$method} = $stats_pdl->$method;
+        }
+        foreach my $pair (pairs @methods_with_args) {
+            my $method = $pair->[0];
+            $results{join '', @$pair} = $stats_pdl->$method ($pair->[1]);
         }
     }
     if (FEEDBACK) {
@@ -65,6 +78,10 @@ sub stats_desc {
     for my $i (0..$n_iters) {
         foreach my $method (@methods) {
             $results{$method} = $stats_desc->$method;
+        }
+        foreach my $pair (pairs @methods_with_args) {
+            my $method = $pair->[0];
+            $results{join '', @$pair} = $stats_desc->$method ($pair->[1]);
         }
     }
     if (FEEDBACK) {
