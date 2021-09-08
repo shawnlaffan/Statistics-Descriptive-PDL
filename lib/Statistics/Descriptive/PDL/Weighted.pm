@@ -214,7 +214,7 @@ sub _deduplicate_piddle {
 
     my $unique = $piddle->uniq;
 
-    return $self->_get_piddle
+    return $piddle
       if $unique->nelem == $piddle->nelem;
 
     if (!$self->{sorted}) {
