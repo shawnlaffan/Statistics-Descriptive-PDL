@@ -206,9 +206,11 @@ sub _deduplicate_piddle {
     my $self = shift;
     my $piddle = $self->_get_piddle;
     
-    return undef if !defined $piddle;
+    return undef
+      if !defined $piddle;
 
-    return $piddle if $self->{_cache}{deduplicated};
+    return $piddle
+      if $self->{_cache}{deduplicated};
 
     my $unique = $piddle->uniq;
 
