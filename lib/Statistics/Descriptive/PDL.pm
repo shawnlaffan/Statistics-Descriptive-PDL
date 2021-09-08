@@ -306,6 +306,9 @@ sub percentile {
     return undef
       if !defined $piddle || $piddle->nelem == 0;
 
+    return $self->median
+      if $p == 50;
+
     if (fmod ($p, 5) == 0) {
         return $self->{_cache}{percentile}{$p}
           if defined $self->{_cache}{percentile}{$p};
