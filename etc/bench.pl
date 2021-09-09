@@ -31,24 +31,19 @@ my $stats_desc = Statistics::Descriptive::Full->new;
 $stats_desc->add_data (\@flat_data);
 
 my @methods = qw /mean standard_deviation skewness kurtosis median mode/;
-#  percentiles cache some
-my @methods_with_args = (
-    'percentile',  1,
-    'percentile', 10,
-    'percentile', 32,
-    'percentile', 84.2,
-    'percentile', 95,
-);
+#  some percentiles are cached
+my @methods_with_args = map {('percentile', $_)} (1, 5, 10, 15, 20, 25, 30, 32, 84.2, 95, 50);
 
 stats_pdl();
 stats_desc();
 
-say "Running with data size $data_size, calling stats $n_iters times"; 
-cmpthese (100, {
-    stats_pdl  => \&stats_pdl,
-    stats_desc => \&stats_desc,
-});
-
+if (!FEEDBACK) {
+    say "Running with data size $data_size, calling stats $n_iters times"; 
+    cmpthese (100, {
+        stats_pdl  => \&stats_pdl,
+        stats_desc => \&stats_desc,
+    });
+}
 
 sub stats_pdl {
     my $stats_pdl = Statistics::Descriptive::PDL::SampleWeighted->new;
@@ -65,7 +60,7 @@ sub stats_pdl {
     }
     if (FEEDBACK) {
         say 'Stats PDL';
-        say join ' ', @results{@methods};
+        say join ' ', map {"$_: $results{$_}"} sort keys %results;
     }
 }
 
@@ -86,7 +81,7 @@ sub stats_desc {
     }
     if (FEEDBACK) {
         say 'Stats Desc';
-        say join ' ', @results{@methods};
+        say join ' ', map {"$_: $results{$_}"} sort keys %results;
     }
 }
 
