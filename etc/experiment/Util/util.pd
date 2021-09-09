@@ -32,24 +32,17 @@ EOD
 
 #ADAPTED FROM
 #https://github.com/PDLPorters/pdl/blob/5e95b25dd982df40e5b074594776c4a2c008945d/Basic/Slices/slices.pd#L1287
-pp_def('sum_a_by_contiguous_b',
-  Pars      => 'a(n); b(n); double [o]t(n); indx s(n);',
-  # GenericTypes => ['L', 'F', 'D'],
-  #RedoDimsCode=>'$SIZE(m)=j;',
-  #RedoDimsCode=>'$SIZE(m)=2;',
-  PMCode=><<'EOC',
-sub PDL::sum_a_by_contiguous_b {
+pp_def('rle_sum',
+  Pars      => 'a(n); b(n); [o]t(n); indx s(n);',
+  PMCode    => <<'EOC',
+sub PDL::rle_sum {
   my ($x,$y) = @_;
-  my $t     = $x->zeroes ($x->type(), $x->nelem);
-  my $sizer = $x->zeroes (PDL::indx, $x->nelem);
-  &PDL::_sum_a_by_contiguous_b_int($x,$y,$t,$sizer);
-  #my $max_ind = pdl([0])->vsearch_insert_leftmost ($sizer)->at(0);
-  my $max_ind = $sizer->max->sclr;
-  say STDERR "SIZER: $sizer";
-  say STDERR "MAX IND: $max_ind";
-  say STDERR "T: $t";
-  say STDERR "CHECKER: " . $t->where($sizer);
-  #return ($t->slice("0:$max_ind")->sever, $sizer->sever);
+  #  will not handle overflow
+  my $t     = $x->zeroes ($x->type(), $x->dims);
+  my $sizer = $x->zeroes (PDL::indx, $x->dims);
+  &PDL::_rle_sum_int($x,$y,$t,$sizer);
+  #say STDERR $t;
+  #say STDERR $t->which;
   return ($t->where($sizer));
 }
 EOC
@@ -71,7 +64,7 @@ EOC
       }
       sum += $a();
     %}
-    $t(n=>j) = sum;  #  last sequence
+    $t(n=>j) = sum;
     $s(n=>j) = 1;
   ',
   Doc      => '
