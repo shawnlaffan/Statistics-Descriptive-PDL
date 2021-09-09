@@ -350,7 +350,7 @@ sub _percentile {
 
     my $target_wt = $self->sum_weights * ($p / 100);
 
-    my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);  
+    my $idx = PDL->pdl($target_wt)->vsearch_insert_leftmost($cumsum->reshape);
 
     return $data->at($idx);
 }
