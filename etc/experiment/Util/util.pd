@@ -90,7 +90,7 @@ sub PDL::rle_sum_onesie {
   my $t     = $x->zeroes ($x->type(), $x->dims);
   #  this stores in its first value the highest index into $t
   my $sizer = pdl(PDL::indx, [0]);
-  my $zz = &PDL::_rle_sum_onesie_int($x,$y,$t,$sizer);
+  &PDL::_rle_sum_onesie_int($x,$y,$t,$sizer);
   #say STDERR "S IS: " . $sizer;
   #say STDERR "T IS $t";
   $sizer = $sizer->at(0);
