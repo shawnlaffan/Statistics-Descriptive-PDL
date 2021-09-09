@@ -33,28 +33,46 @@ EOD
 #ADAPTED FROM
 #https://github.com/PDLPorters/pdl/blob/5e95b25dd982df40e5b074594776c4a2c008945d/Basic/Slices/slices.pd#L1287
 pp_def('sum_a_by_contiguous_b',
-  Pars      => 'a(n); b(n); double [o]t(m);',
+  Pars      => 'a(n); b(n); double [o]t(n); indx s(n);',
   # GenericTypes => ['L', 'F', 'D'],
   #RedoDimsCode=>'$SIZE(m)=j;',
-  RedoDimsCode=>'$SIZE(m)=2;',
+  #RedoDimsCode=>'$SIZE(m)=2;',
+  PMCode=><<'EOC',
+sub PDL::sum_a_by_contiguous_b {
+  my ($x,$y) = @_;
+  my $t     = $x->zeroes ($x->type(), $x->nelem);
+  my $sizer = $x->zeroes (PDL::indx, $x->nelem);
+  &PDL::_sum_a_by_contiguous_b_int($x,$y,$t,$sizer);
+  #my $max_ind = pdl([0])->vsearch_insert_leftmost ($sizer)->at(0);
+  my $max_ind = $sizer->max->sclr;
+  say STDERR "SIZER: $sizer";
+  say STDERR "MAX IND: $max_ind";
+  say STDERR "T: $t";
+  say STDERR "CHECKER: " . $t->where($sizer);
+  #return ($t->slice("0:$max_ind")->sever, $sizer->sever);
+  return ($t->where($sizer));
+}
+EOC
   HandleBad => 0,  #  fix later, but we should not have any such data anyway?
   Code      => '
     PDL_Indx j = 0;
     double sum = 0;
     $GENERIC(b) bval, last_bval;
     last_bval = $b(n=>0);
-    $t(m=>0) = 0;
+    $t(n=>0) = 0;
     loop (n) %{
       bval = $b();
       if (last_bval != bval) {
-        $t(m=>j) = sum;
+        $t(n=>j) = sum;
+        $s(n=>j) = 1;
         sum = 0;
         j++;
         last_bval = bval;
       }
       sum += $a();
     %}
-    $t(m=>j) = sum;
+    $t(n=>j) = sum;  #  last sequence
+    $s(n=>j) = 1;
   ',
   Doc      => '
  
