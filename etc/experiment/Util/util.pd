@@ -39,8 +39,9 @@ sub PDL::rle_sum {
   my ($x,$y) = @_;
   #  will not handle overflow
   my $t     = $x->zeroes ($x->type(), $x->dims);
+  #  indices with values - if 1D ndarray then we could use a single value for highest index 
   my $sizer = $x->zeroes (PDL::indx, $x->dims);
-  &PDL::_rle_sum_int($x,$y,$t,$sizer);
+  my $zz = &PDL::_rle_sum_int($x,$y,$t,$sizer);
   #say STDERR $t;
   #say STDERR $t->which;
   return ($t->where($sizer));
@@ -66,6 +67,56 @@ EOC
     %}
     $t(n=>j) = sum;
     $s(n=>j) = 1;
+  ',
+  Doc      => '
+ 
+=for ref
+ 
+Sum values in first ndarray given contiguous sequences of
+the same value in the second ndarray.
+ 
+=cut
+  ',
+ 
+);
+
+
+pp_def('rle_sum_onesie',
+  Pars      => 'a(n); b(n); [o]t(n); indx s(n);',
+  PMCode    => <<'EOC',
+sub PDL::rle_sum_onesie {
+  my ($x,$y) = @_;
+  #  will not handle overflow
+  my $t     = $x->zeroes ($x->type(), $x->dims);
+  #  this stores in its first value the highest index into $t
+  my $sizer = pdl(PDL::indx, [0]);
+  my $zz = &PDL::_rle_sum_onesie_int($x,$y,$t,$sizer);
+  #say STDERR "S IS: " . $sizer;
+  #say STDERR "T IS $t";
+  $sizer = $sizer->at(0);
+  #say STDERR "S IS: " . $sizer;
+  return ($t->slice("0:$sizer")->sever);
+}
+EOC
+  HandleBad => 0,  #  fix later, but we should not have any such data anyway?
+  Code      => '
+    PDL_Indx j = 0;
+    double sum = 0;
+    $GENERIC(b) bval, last_bval;
+    last_bval = $b(n=>0);
+    $t(n=>0) = 0;
+    loop (n) %{
+      bval = $b();
+      if (last_bval != bval) {
+        $t(n=>j) = sum;
+        sum = 0;
+        j++;
+        last_bval = bval;
+      }
+      sum += $a();
+    %}
+    $t(n=>j) = sum;
+    $s(n=>0) = j;
   ',
   Doc      => '
  
