@@ -25,3 +25,10 @@ Makefile
 xt/.perlcritic-history
 Statistics-Descriptive-PDL-*.tar
 Statistics-Descriptive-PDL-*.tar.gz
+etc/experiment/Util/blib/
+/blib
+etc/experiment/Util/pm_to_blib
+etc/experiment/Util/Util.def
+etc/experiment/Util/Util.xs
+etc/experiment/Util/Util.c
+**/nytprof*
