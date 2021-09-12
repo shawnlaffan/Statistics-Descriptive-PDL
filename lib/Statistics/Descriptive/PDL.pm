@@ -309,6 +309,9 @@ sub percentile {
     return $self->median
       if $p == 50;
 
+    die "Percentile $p outside range 0..100"
+      if $p < 0 or $p > 100;
+
     return $self->{_cache}{percentile}{$p}
       if defined $self->{_cache}{percentile}{$p};
 
