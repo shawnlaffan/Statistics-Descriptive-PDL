@@ -1,5 +1,8 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.08    2021-09-12
+        Cache all integer percentiles
+
 0.07    2021-09-06
         Another attempt to fix precision related test failures
 

@@ -309,10 +309,8 @@ sub percentile {
     return $self->median
       if $p == 50;
 
-    if (fmod ($p, 5) == 0) {
-        return $self->{_cache}{percentile}{$p}
-          if defined $self->{_cache}{percentile}{$p};
-    }
+    return $self->{_cache}{percentile}{$p}
+      if defined $self->{_cache}{percentile}{$p};
 
     my $pctl = $self->_percentile($p);
 
@@ -320,7 +318,7 @@ sub percentile {
         $pctl = $pctl->sclr;
     }
 
-    if (fmod ($p, 5) == 0) {
+    if (int ($p) == $p) {
         $self->{_cache}{percentile}{$p} = $pctl;
     }
 
