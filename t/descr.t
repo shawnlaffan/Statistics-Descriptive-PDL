@@ -622,4 +622,6 @@ sub test_add_new_data {
     # TEST
     is_deeply (\%obj2, \%obj1, 'stats consistent after adding new data');
 
+    is $stat2->standard_deviation, $stat2->sd,    "sd alias works";
+    is $stat2->standard_deviation, $stat2->stdev, "stddev alias works";
 }

@@ -160,6 +160,9 @@ sub _mean {
 }
 
 
+sub sd    {return $_[0]->standard_deviation}
+sub stdev {return $_[0]->standard_deviation}
+
 sub _standard_deviation {
     my $self = shift;
 
