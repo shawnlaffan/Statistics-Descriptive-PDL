@@ -453,6 +453,12 @@ Skewness and kurtosis to match that of MS Excel.
 If you are used to R then these are the same as type=2
 in e1071::skewness and e1071::kurtosis.
 
+=item sd
+
+=item stdev
+
+These are aliases for the standard_deviation method.
+
 
 =item percentile (10)
 
