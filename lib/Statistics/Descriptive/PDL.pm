@@ -462,6 +462,11 @@ The percentile calculation differs from Statistics::Descriptive in that it uses
 linear interpolation to determine the values, and thus does not
 return the exact same values as the input data.
 
+=item percentiles (10, 20, 30)
+
+A simple wrapper around the percentile method to allow calculation of
+multiple values in one call.
+
 =item iqr
 
 The inter-quartile range.  A convenience method to calculate the
