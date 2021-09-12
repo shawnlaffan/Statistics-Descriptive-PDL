@@ -296,6 +296,20 @@ sub _mode {
     return $mode;
 }
 
+sub percentiles {
+    my ($self, @percentiles) = @_;
+
+    my $piddle = $self->_get_piddle;
+
+    return
+      if !defined $piddle || $piddle->nelem == 0;
+
+    my @vals = map {$self->percentile($_)} @percentiles;
+
+    return @vals;
+}
+
+
 #  caching wrapper
 #  need to convert $p to fraction, or perhaps die if it is between 0 and 1
 #  hard-coded cache percentiles not ideal
