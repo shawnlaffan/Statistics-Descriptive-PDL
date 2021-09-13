@@ -1,5 +1,11 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.09    2021-09-13
+        - Add values_are_unique method to allow the user to flag
+          (or check) that the values are unique.  This can be used
+          to speed up percentile and median calcs.
+          Caveat emptor if the data are not unique, obviously.
+
 0.08    2021-09-12
         - Cache all integer percentiles
         - Add percentiles method to get multiple values.
