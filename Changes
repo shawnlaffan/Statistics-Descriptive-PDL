@@ -1,5 +1,8 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.10    2021-09-13
+        - add get_data and get_data_as_hash methods
+
 0.09    2021-09-13
         - Add values_are_unique method to allow the user to flag
           (or check) that the values are unique.  This can be used
