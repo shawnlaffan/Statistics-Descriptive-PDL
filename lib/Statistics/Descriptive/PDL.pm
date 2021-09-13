@@ -384,8 +384,8 @@ Version 0.09
 
     my $stats = Statistics::Descriptive::PDL->new();
     $stats->add_data(1,2,3,4);
-    my $mean = $stat->mean;
-    my $var  = $stat->variance();
+    my $mean = $stats->mean;
+    my $var  = $stats->variance();
 
 =head1 DESCRIPTION
 
@@ -407,7 +407,7 @@ Create a new statistics object.  Takes no arguments.
 Add data to the stats object.  Passed through to the underlying PDL object.
 Appends to any existing data.
 
-Multidimensional data are flattened into a singe dimensional array.
+Multidimensional data are flattened into a single dimensional array.
 
 =item values_are_unique
 

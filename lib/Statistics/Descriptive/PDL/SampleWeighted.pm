@@ -179,8 +179,8 @@ Version 0.09
 
     my $stats = Statistics::Descriptive::PDL::SampleWeighted->new;
     $stats->add_data([1,2,3,4], [1,3,5,6]);  #  values then weights
-    my $mean = $stat->mean;
-    my $var  = $stat->variance;
+    my $mean = $stats->mean;
+    my $var  = $stats->variance;
     
     #  or you can add data using a hash ref
     my %data = (1 => 1, 2 => 3, 3 => 5, 4 => 6);
@@ -214,10 +214,10 @@ Create a new statistics object.  Takes no arguments.
 
 =item add_data ([1,2,3,4], [5,1,1,2)
 
-Same as L<Statistics::Descriptive::PDL::Weighted> except that non-integer weights
-will be converted to integer using PDL's rules.  
-
 Add data to the stats object.  Appends to any existing data.
+
+Same as L<Statistics::Descriptive::PDL::Weighted> except that non-integer weights
+will be converted to integer using PDL's rules.
 
 =back
 
