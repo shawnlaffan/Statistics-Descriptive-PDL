@@ -32,3 +32,4 @@ etc/experiment/Util/Util.def
 etc/experiment/Util/Util.xs
 etc/experiment/Util/Util.c
 **/nytprof*
+xt/.perlcritic-history
