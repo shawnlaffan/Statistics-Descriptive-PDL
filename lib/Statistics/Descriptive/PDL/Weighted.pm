@@ -54,9 +54,12 @@ sub add_data {
 
     my ($data_piddle, $weights_piddle);
 
+    my $data_from_hash;
+    
     if (ref $data eq 'HASH') {
         $data_piddle    = PDL->pdl ([keys %$data])->flat;
         $weights_piddle = PDL->pdl ($self->_wt_type, [values %$data])->flat;
+        $data_from_hash = 1;
     }
     else {
         $data_piddle    = PDL->pdl ($self->{data_type}, $data)->flat;
@@ -87,12 +90,25 @@ sub add_data {
         $self->_set_weights_piddle ($weights_piddle);
     }
 
-    #  need to clear late
+    #  need to clear late because count is cached
     $self->clear_cache;
+
+    #  somewhat awkward but needs to be set after clearing the cache
+    if ($data_from_hash && !$has_existing_data) {
+        $self->values_are_unique(1);
+    }
 
     return $self->count;
 }
 
+sub values_are_unique {
+    my $self = shift;
+    if (@_) {
+        my $flag = shift;
+        $self->{_cache}{deduplicated} = !!$flag;
+    }
+    return $self->{_cache}{deduplicated};
+}
 
 sub _set_weights_piddle {
     my ($self, $data) = @_;
@@ -210,12 +226,14 @@ sub _deduplicate_piddle {
       if !defined $piddle;
 
     return $piddle
-      if $self->{_cache}{deduplicated};
+      if $self->values_are_unique;
 
     my $unique = $piddle->uniq;
 
-    return $piddle
-      if $unique->nelem == $piddle->nelem;
+    if ($unique->nelem == $piddle->nelem) {
+        $self->values_are_unique(1);
+        return $piddle
+    }
 
     if (!$self->{sorted}) {
         $unique = $unique->qsort;
@@ -243,8 +261,8 @@ sub _deduplicate_piddle {
     $self->_set_piddle($unique);
     $self->_set_weights_piddle(\@wts);
 
-    delete $self->{_cache};
-    $self->{_cache}{deduplicated} = 1;
+    $self->clear_cache;
+    $self->values_are_unique (1);
 
     return $self->_get_piddle;
 }
@@ -423,6 +441,14 @@ specify anything pdl accepts as valid.
 
 An exception is raised the weights are <= 0, or are not the same size as the data.
 
+=item values_are_unique
+
+=item values_are_unique (1)
+
+Flag to indicate if the data have duplicate values.
+Pass a true value to indicate your data have no
+duplicate values, making the median and percentile
+calculations faster (at the risk of you not being correct).
 
 =item sum_wts
 

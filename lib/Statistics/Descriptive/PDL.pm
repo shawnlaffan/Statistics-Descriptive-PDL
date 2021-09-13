@@ -116,6 +116,8 @@ sub add_data {
     return $self->count;
 }
 
+sub values_are_unique {}
+
 #  flatten $data if multidimensional
 sub _set_piddle {
     my ($self, $data) = @_;
@@ -406,6 +408,13 @@ Add data to the stats object.  Passed through to the underlying PDL object.
 Appends to any existing data.
 
 Multidimensional data are flattened into a singe dimensional array.
+
+=item values_are_unique
+
+Flag whether the data have duplicate values.
+Has no effect on unweighted data.
+It is provided purely for a consistent interface with
+the weighted variants.
 
 =item clear_cache
 

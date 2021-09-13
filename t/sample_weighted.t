@@ -51,6 +51,8 @@ sub test_wikipedia_percentile_example {
     is $weighted->percentile(50), $weighted->median,   "median same as 50th percentile, " . join ' ', @data;
     is $weighted->percentile(50), $unweighted->median, 'weighted and unweighted median';
 
+    ok $weighted->values_are_unique, "unique flag set to true value after calculating percentiles";
+
     #  data from R
     my %exp = (
         20 => 19, 30 => 20, 40 => 29,
