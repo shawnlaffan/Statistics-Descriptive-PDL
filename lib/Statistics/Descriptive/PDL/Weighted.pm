@@ -101,6 +101,36 @@ sub add_data {
     return $self->count;
 }
 
+sub get_data {
+    my $self = shift;
+    my $piddle = $self->_get_piddle;
+    my $wts_piddle = $self->_get_weights_piddle;
+    
+    my $data = defined $piddle ? $piddle->unpdl : [];
+    my $wts  = defined $wts_piddle ? $wts_piddle->unpdl : [];
+    
+    return wantarray ? ($data, $wts) : [$data, $wts];
+}
+
+sub get_data_as_hash {
+    my $self = shift;
+    
+    my $piddle = $self->_get_piddle;
+    
+    return wantarray ? () : {}
+      if !defined $piddle;
+
+    $self->_deduplicate_piddle;
+    my $wts_piddle = $self->_get_weights_piddle;
+    my $data = $piddle->unpdl;
+    my $wts  = $wts_piddle->unpdl;
+    my %h;
+    @h{@$data} = @$wts;
+
+    return wantarray ? (%h) : \%h;
+}
+
+
 sub values_are_unique {
     my $self = shift;
     if (@_) {
@@ -440,6 +470,21 @@ Since the L<PDL::pdl> function is used to process the data and weights you shoul
 specify anything pdl accepts as valid.
 
 An exception is raised the weights are <= 0, or are not the same size as the data.
+
+=item get_data
+
+Returns arrays of the data and the weights.
+
+In scalar context returns an array of arrays, i.e. C<[\@data,\@wts]>.
+
+=item get_data_as_hash
+
+Returns the data as a perl hash, with the data values as the hash keys and weights as the hash values.
+Deduplicates the data if needed, incrementing the weights as appropriate.
+
+Data values are stringified so there is obviously potential for loss of precision.  
+
+Returns a hash ref in scalar context.
 
 =item values_are_unique
 

@@ -116,6 +116,30 @@ sub add_data {
     return $self->count;
 }
 
+sub get_data {
+    my $self = shift;
+    my $piddle = $self->_get_piddle;
+    
+    my $data = defined $piddle ? $piddle->unpdl : [];
+    
+    return wantarray ? @$data : $data;
+}
+
+sub get_data_as_hash {
+    my $self = shift;
+
+    my $piddle = $self->_get_piddle;
+    if (defined $piddle) {
+        require Statistics::Descriptive::PDL::SampleWeighted;
+        my $wtd_obj = Statistics::Descriptive::PDL::SampleWeighted->new;
+        my $wts_piddle = PDL->ones ($piddle->dims);
+        $wtd_obj->add_data ($piddle->copy, $wts_piddle);
+        return $wtd_obj->get_data_as_hash;
+    }
+
+    return wantarray ? () : {};
+}
+
 sub values_are_unique {}
 
 #  flatten $data if multidimensional
@@ -408,6 +432,21 @@ Add data to the stats object.  Passed through to the underlying PDL object.
 Appends to any existing data.
 
 Multidimensional data are flattened into a single dimensional array.
+
+=item get_data
+
+Return the data as a perl array.  Returns an array ref in scalar context.
+
+=item get_data_as_hash
+
+Returns the data as a perl hash, with the unique data values as the hash keys and
+the counts of each unique data value as the hash values.
+
+Deduplicates the data if needed, incrementing the weights as appropriate.
+Internally it uses a L<Statistics::Descriptive::PDL::SampleWeighted> object.
+
+Data values are stringified so there is obviously potential for loss of precision.
+
 
 =item values_are_unique
 
