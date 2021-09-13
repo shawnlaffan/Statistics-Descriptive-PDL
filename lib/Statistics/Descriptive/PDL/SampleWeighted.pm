@@ -120,6 +120,8 @@ sub _percentile {
     return undef
       if !defined $piddle or $piddle->isempty;
 
+    $self->_sort_piddle;
+
     $piddle = $self->_deduplicate_piddle;
 
     my $wt_piddle = $self->_get_weights_piddle;

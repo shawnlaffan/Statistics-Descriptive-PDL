@@ -354,6 +354,10 @@ sub percentile {
 
     die "Percentile $p outside range 0..100"
       if $p < 0 or $p > 100;
+    
+    #  allow for other number formats like '005'
+    #  needed for cache
+    $p += 0;
 
     return $self->{_cache}{percentile}{$p}
       if defined $self->{_cache}{percentile}{$p};
