@@ -1,5 +1,13 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.12    2021-09-14
+        - Fix issue with Weighted::get_data_as_hash
+          We weren't updating the data ndarray after deduping,
+          so the weights (hash values) were all out of kilter.
+
+0.11    2021-09-13
+        - fix an egregious error in SampleWeighted percentile method
+
 0.10    2021-09-13
         - add get_data and get_data_as_hash methods
 

@@ -18,7 +18,7 @@ use PDL::NiceSlice;
 
 ## no critic (ProhibitExplicitReturnUndef)
 
-our $VERSION = '0.10';
+our $VERSION = '0.12';
 
 use parent 'Statistics::Descriptive::PDL';
 
@@ -116,14 +116,14 @@ sub get_data_as_hash {
     my $self = shift;
     
     my $piddle = $self->_get_piddle;
-    
+
     return wantarray ? () : {}
       if !defined $piddle;
 
     $self->_deduplicate_piddle;
-    my $wts_piddle = $self->_get_weights_piddle;
-    my $data = $piddle->unpdl;
-    my $wts  = $wts_piddle->unpdl;
+
+    my $data = $self->_get_piddle->unpdl;
+    my $wts  = $self->_get_weights_piddle->unpdl;
     my %h;
     @h{@$data} = @$wts;
 
@@ -416,7 +416,7 @@ Statistics::Descriptive::Weighted using PDL as the back-end
 
 =head1 VERSION
 
-Version 0.10
+Version 0.11
 
 =cut
 
