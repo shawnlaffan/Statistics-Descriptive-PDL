@@ -25,12 +25,13 @@ my $tolerance = 1E-10;
 #my @xsubs = sort grep {$_ =~ /pdl/i} $obj->functions();
 #print join "\n", @xsubs;
 
-
 test_wikipedia_percentile_example();
 test_equal_weights();
 test_percentile_from_hash();
+test_geometric_mean_large_sample();
 
 done_testing();
+
 
 sub test_percentile_from_hash {
     
@@ -196,6 +197,24 @@ sub test_equal_weights {
     };
 
 }
+
+sub test_geometric_mean_large_sample {
+    my $unweighted = $stats_class->new;
+    my $weighted   = $stats_class_wtd->new;
+    #  "well behaved" data so median is not interpolated
+    my @data = (1..1000);
+    $unweighted->add_data([@data, @data]);
+    $weighted->add_data(\@data, [(2) x scalar @data]);
+
+    my $gm_u = $unweighted->geometric_mean;
+    my $gm_w = $weighted->geometric_mean;
+
+    ok abs ($gm_w - $gm_u) < $tolerance,
+       "geometric mean for large sample should not be Inf";
+
+}
+
+
 
 
 1;
