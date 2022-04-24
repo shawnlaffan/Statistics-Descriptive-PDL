@@ -25,12 +25,26 @@ my $tolerance = 1E-10;
 #my @xsubs = sort grep {$_ =~ /pdl/i} $obj->functions();
 #print join "\n", @xsubs;
 
+test_small_samples();
 test_wikipedia_percentile_example();
 test_equal_weights();
 test_percentile_from_hash();
 test_geometric_mean_large_sample();
 
 done_testing();
+
+sub test_small_samples {
+    my $weighted   = $stats_class_wtd->new;
+    $weighted->add_data({15 => 1, 12 => 1});
+
+    is $weighted->skewness, undef, 'skew undefined when two samples';
+    $weighted->add_data({1 => 1});
+    ok defined $weighted->skewness, 'skew defined when three samples';
+
+    is $weighted->kurtosis, undef, 'kurtosis undefined when three samples';
+    $weighted->add_data({2 => 1});
+    ok defined $weighted->kurtosis, 'kurtosis defined when four samples';
+}
 
 
 sub test_percentile_from_hash {
