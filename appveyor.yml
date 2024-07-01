@@ -4,7 +4,7 @@ cache:
   - C:\Strawberry
 
 install:
-  - rmdir /S /Q C:\strawberry
+#  - rmdir /S /Q C:\strawberry
   - cinst StrawberryPerl
   - path C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - mkdir %APPVEYOR_BUILD_FOLDER%\tmp
