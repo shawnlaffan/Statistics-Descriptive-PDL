@@ -201,9 +201,9 @@ This module provides basic functions used in descriptive statistics
 using weighted values.  Inherits from L<Statistics::Descriptive::PDL::Weighted>,
 with the key difference that the weights are forced to be integers.
 
-Variance, skewness and kurtosis all use the unbiased calculations.  
+Variance, skewness and kurtosis all use the unbiased calculations.
 The median and percentiles are calculated using interpolation,
-analogous to the unweighted case where values are repeated by the weights.  
+analogous to the unweighted case where values are repeated by the weights.
 
 
 =head1 METHODS
@@ -212,7 +212,7 @@ analogous to the unweighted case where values are repeated by the weights.
 
 =item new
 
-Create a new statistics object.  Takes no arguments.  
+Create a new statistics object.  Takes no arguments.
 
 =item add_data (\%data)
 

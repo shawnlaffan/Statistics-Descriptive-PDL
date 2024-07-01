@@ -440,7 +440,7 @@ Version 0.11
 =head1 DESCRIPTION
 
 This module provides basic functions used in descriptive statistics
-using weighted values.  
+using weighted values.
 
 
 =head1 METHODS
@@ -449,7 +449,7 @@ using weighted values.
 
 =item new
 
-Create a new statistics object.  Takes no arguments.  
+Create a new statistics object.  Takes no arguments.
 
 =item add_data (\%data)
 
@@ -480,7 +480,7 @@ In scalar context returns an array of arrays, i.e. C<[\@data,\@wts]>.
 Returns the data as a perl hash, with the data values as the hash keys and weights as the hash values.
 Deduplicates the data if needed, incrementing the weights as appropriate.
 
-Data values are stringified so there is obviously potential for loss of precision.  
+Data values are stringified so there is obviously potential for loss of precision.
 
 Returns a hash ref in scalar context.
 
@@ -504,16 +504,16 @@ Sum of the squared weights vector.  Each weight is squared and the sum of these 
 =item Statistical methods
 
 Most of the methods should need no explanation here,
-except to note that the standard_deviation, skewness and kurtosis 
+except to note that the standard_deviation, skewness and kurtosis
 use the biased methods.  This is because one cannot guarantee the data are sample counts.
 The same applies to the median and percentiles.  The median uses a centre of mass calculation, and the
 percentiles using analogous approach.  This is because the weights are not guaranteed
 to be integers and so there is no sense interpolating.
 
 Use L<Statistics::Descriptive::PDL::SampleWeighted> when your weights are counts
-and you need the unbiased methods.  
+and you need the unbiased methods.
 
-The iqr is the inter-quartile range, calculated as the difference of the 75th and 25th percentiles. 
+The iqr is the inter-quartile range, calculated as the difference of the 75th and 25th percentiles.
 
 =item geometric_mean
 
@@ -537,7 +537,7 @@ The iqr is the inter-quartile range, calculated as the difference of the 75th an
 
 =item variance
 
-=item count 
+=item count
 
 =item skewness
 
