@@ -6,7 +6,7 @@ local $| = 1;
 use Statistics::Descriptive::PDL::SampleWeighted;
 
 use Test::More;
-require_ok ('Sereal') or skip_all => 'no sereal';
+require_ok ('Sereal') or skip_all ('no sereal');
 
 use Sereal::Encoder qw /encode_sereal/;
 use Sereal::Decoder qw /decode_sereal/;
