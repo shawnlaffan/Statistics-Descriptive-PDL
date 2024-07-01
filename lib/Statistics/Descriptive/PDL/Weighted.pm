@@ -21,7 +21,7 @@ my @cache_methods = qw /
   count sum mode median
   mean standard_deviation skewness kurtosis
   geometric_mean harmonic_mean
-  sum_weights
+  sum_weights sum_sqr_weights
 /;
 __PACKAGE__->_make_caching_accessors( \@cache_methods );
 
@@ -161,6 +161,11 @@ sub _sum_weights {
     my $self = shift;
 
     return $self->_get_weights_piddle->sum;
+}
+
+sub _sum_sqr_weights {
+    my $self = shift;
+    return $self->_get_weights_piddle->power(2)->sum;
 }
 
 #sub min_weight {
@@ -488,9 +493,13 @@ Pass a true value to indicate your data have no
 duplicate values, making the median and percentile
 calculations faster (at the risk of you not being correct).
 
-=item sum_wts
+=item sum_weights
 
 Sum of the weights vector.
+
+=item sum_sqr_weights
+
+Sum of the squared weights vector.  Each weight is squared and the sum of these values then calculated.
 
 =item Statistical methods
 
