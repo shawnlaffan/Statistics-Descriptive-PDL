@@ -52,7 +52,7 @@ sub add_data {
     my $data_from_hash;
     
     if (ref $data eq 'HASH') {
-        $data_piddle    = PDL->pdl ([keys %$data])->flat;
+        $data_piddle    = PDL->pdl ($self->{data_type}, [keys %$data])->flat;
         $weights_piddle = PDL->pdl ($self->_wt_type, [values %$data])->flat;
         $data_from_hash = 1;
     }
