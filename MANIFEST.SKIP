@@ -33,3 +33,6 @@ xt/.perlcritic-history
 
 .travis.yml
 appveyor.yml
+
+\.idea
+etc/
