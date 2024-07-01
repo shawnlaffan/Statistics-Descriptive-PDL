@@ -1,5 +1,9 @@
 Revision history for Statistics-Descriptive-PDL
 
+0.17    2024-07-01
+        - add sum_sqr_weights methods to obtain the sum of squared weights.
+        - All objects now support sum_weights and methods for convenience.
+
 0.16    2022-04-25
         - SampleWeighted:
           - Return undef for skewness and kurtosis

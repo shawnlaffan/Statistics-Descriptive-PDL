@@ -16,7 +16,7 @@ use PDL::Lite '2.012';
 
 ## no critic (ProhibitExplicitReturnUndef)
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 use parent 'Statistics::Descriptive::PDL::Weighted';
 
