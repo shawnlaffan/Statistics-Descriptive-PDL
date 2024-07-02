@@ -115,10 +115,10 @@ sub get_data_as_hash {
     return wantarray ? () : {}
       if !defined $piddle;
 
-    $self->_deduplicate_piddle;
+    my $deduped = $self->_deduplicate;
 
-    my $data = $self->_get_piddle->unpdl;
-    my $wts  = $self->_get_weights_piddle->unpdl;
+    my $data = $deduped->_get_piddle->unpdl;
+    my $wts  = $deduped->_get_weights_piddle->unpdl;
     my %h;
     @h{@$data} = @$wts;
 
@@ -248,21 +248,21 @@ sub _sort_piddle {
 #  de-duplicate if needed, aggregating weights
 #  there should be a sumover or which approach that will work better
 #  maybe yvals related
-sub _deduplicate_piddle {
-    my $self = shift;
+sub _deduplicate {
+    my ($self, %args) = @_;
     my $piddle = $self->_get_piddle;
     
     return undef
       if !defined $piddle;
 
-    return $piddle
+    return $self
       if $self->values_are_unique;
 
     my $unique = $piddle->uniq;
 
     if ($unique->nelem == $piddle->nelem) {
         $self->values_are_unique(1);
-        return $piddle
+        return $self
     }
 
     if (!$self->{sorted}) {
@@ -288,13 +288,21 @@ sub _deduplicate_piddle {
         }
         $wts[$j] += $wts_piddle->at($i);
     }
-    $self->_set_piddle($unique);
-    $self->_set_weights_piddle(\@wts);
 
-    $self->clear_cache;
-    $self->values_are_unique (1);
+    if ($args{inplace}) {
+        $self->_set_piddle($unique);
+        $self->_set_weights_piddle(\@wts);
+        $self->clear_cache;
+        $self->values_are_unique (1);
+        return $self;
+    }
 
-    return $self->_get_piddle;
+    my $new = $self->new($self->{data_type});
+    $new->_set_piddle($unique);
+    $new->_set_weights_piddle(\@wts);
+    $new->values_are_unique (1);
+
+    return $new;
 }
 
 sub _get_cumsum_weight_vector {
@@ -367,12 +375,13 @@ sub _geometric_mean {
 sub _mode {
     my $self = shift;
 
-    my $data = $self->_get_piddle;
-
     #  de-duplicate and aggregate weights if needed
-    $data = $self->_deduplicate_piddle;
+    my $deduped = $self->_deduplicate;
 
-    my $wts = $self->_get_weights_piddle;
+    my $data = $deduped->_get_piddle;
+
+
+    my $wts = $deduped->_get_weights_piddle;
     my $mode = $data->at($wts->maximum_ind);
     if ($mode > $data->max) {
         #  PDL returns strange numbers when distributions are flat

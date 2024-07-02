@@ -124,12 +124,16 @@ sub _percentile {
 
     $self->_sort_piddle;
 
-    $piddle = $self->_deduplicate_piddle;
+    #  possible slowdown here - users need to dedup before calling to avoid
+    # my $deduped = $self->_deduplicate;
+    #  there is actually no need to dedup
+    my $deduped = $self;
+    $piddle = $deduped->_get_piddle;
 
-    my $wt_piddle = $self->_get_weights_piddle;
+    # my $wt_piddle = $self->_get_weights_piddle;
 
-    my $cumsum = $self->_get_cumsum_weight_vector;
-    my $wt_sum = $self->sum_weights;
+    my $cumsum = $deduped->_get_cumsum_weight_vector;
+    my $wt_sum = $deduped->sum_weights;
 
     use POSIX qw /floor/;
 

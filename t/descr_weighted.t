@@ -84,11 +84,13 @@ sub test_mode {
 
     is ($object->mode, 11, 'Mode is 11');
 
+    #  dedup used to be  side effect of mode, but not any more so we test it explicitly
+    $object = $object->_deduplicate;
     my $nelems_after = $object->_get_piddle->nelem;
     
     is $nelems_after, 11, 'deduplication gives correct number of elements';
     
-    ok (abs ($sd - $object->standard_deviation) < $tolerance, "SD unchanged by deduplication in ->mode");
+    ok (abs ($sd - $object->standard_deviation) < $tolerance, "SD unchanged by deduplication");
 
 }
 
@@ -685,8 +687,8 @@ sub test_add_new_data_non_unity_wts {
         }
     }
 
-    $stat1->_deduplicate_piddle;
-    $stat2->_deduplicate_piddle;
-    is $stat1->sum_sqr_weights, $stat2->sum_sqr_weights, 'sums of squared weights match after deuplication';
+    $stat1->_deduplicate(inplace => 1);
+    $stat2->_deduplicate(inplace => 1);
+    is $stat1->sum_sqr_weights, $stat2->sum_sqr_weights, 'sums of squared weights match after deduplication';
 
 }
