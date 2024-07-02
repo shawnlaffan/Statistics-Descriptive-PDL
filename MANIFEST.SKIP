@@ -35,4 +35,7 @@ xt/.perlcritic-history
 appveyor.yml
 
 \.idea
+.iml$
+
+.tar$
 etc/

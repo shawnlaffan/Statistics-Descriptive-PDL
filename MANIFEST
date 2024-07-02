@@ -9,7 +9,6 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 README
 README.md
-Statistics-Descriptive-PDL.iml
 t/00-load.t
 t/descr.t
 t/descr_weighted.t
