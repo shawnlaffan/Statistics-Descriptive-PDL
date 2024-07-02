@@ -29,10 +29,9 @@ jobs:
           echo "C:\strawberry\c\bin;C:\strawberry\perl\site\bin;C:\strawberry\perl\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           ##echo $env:PATH
 
-    
       - name: perl -V
         run: perl -V
-        
+
       - name: Prepare for CPAN cache
         run: |
           perl -V > perlversion.txt
@@ -47,15 +46,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-${{ hashFiles('perlversion.txt') }}
 
-          
+
       - name: Install task deps
         run: |
           cpanm --notest --no-man-pages PDL
           cpanm --notest --installdeps .
           cpanm --installdeps .
-  
+
       # Runs a set of commands using the runners shell
       - name: Run tests
         run: |
           prove -l t
-          

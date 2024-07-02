@@ -33,7 +33,7 @@ jobs:
           echo "{~/bin}" >> $GITHUB_PATH
           which perl
           which cpanm
-        
+
       - name: perl -V
         run: perl -V
 
@@ -54,7 +54,6 @@ jobs:
       - name: Install Dynamic Dependencies
         run: |
           cpanm --notest --installdeps .
-      
+
       - name: Run Tests
         run: prove -l -j4
-        
