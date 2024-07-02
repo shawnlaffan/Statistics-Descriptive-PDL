@@ -31,4 +31,3 @@ xt/boilerplate.t
 xt/cpan-changes.t
 xt/style-trailing-space.t
 xt/works_with_sereal.t
-zoert.pl
