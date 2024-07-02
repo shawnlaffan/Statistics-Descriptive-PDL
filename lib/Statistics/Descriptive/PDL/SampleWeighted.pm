@@ -163,6 +163,12 @@ sub _percentile {
     return $piddle->at($idx);
 }
 
+#  weight for each sample is 1
+sub _sum_sqr_sample_weights {
+    my $self = shift;
+    return $self->sum_weights;
+}
+
 
 
 1;
@@ -226,6 +232,12 @@ Add data to the stats object.  Appends to any existing data.
 
 Same as L<Statistics::Descriptive::PDL::Weighted> except that non-integer weights
 will be converted to integer using PDL's rules.
+
+=item sum_sqr_sample_weights
+
+Same as the C< sum_weights > method.  This is because one can consider each
+value as weighted by the number of samples, where each individual sample has
+a weight of 1.
 
 =back
 

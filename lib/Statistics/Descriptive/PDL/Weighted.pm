@@ -510,6 +510,10 @@ Sum of the weights vector.
 
 Sum of the squared weights vector.  Each weight is squared and the sum of these values then calculated.
 
+=item sum_sqr_sample_weights
+
+Same as the C< sum_sqr_weights > method.
+
 =item Statistical methods
 
 Most of the methods should need no explanation here,

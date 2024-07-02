@@ -102,6 +102,10 @@ sub test_wikipedia_percentile_example {
     is $weighted->percentile(50), $weighted->median,   "median same as 50th percentile, " . join ' ', @data;
     is $weighted->percentile(50), $unweighted->median, 'weighted and unweighted median';
 
+    is $weighted->sum_sqr_sample_weights,
+        $unweighted->sum_sqr_sample_weights,
+        'weighted and unweighted sum of squared sample weights';
+
     #  no longer guaranteed unless dedup is inplace
     # ok $weighted->values_are_unique, "unique flag set to true value after calculating percentiles";
 

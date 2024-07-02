@@ -536,6 +536,7 @@ sub test_data_with_samples {
 
     is ($stats->sum_weights, 150, 'sum of weights correct');
     is ($stats->sum_sqr_weights, 100+400+900+1600+2500, 'sum of weights correct');
+    is ($stats->sum_sqr_sample_weights, 100+400+900+1600+2500, 'sum of weights correct');
 
 }
 

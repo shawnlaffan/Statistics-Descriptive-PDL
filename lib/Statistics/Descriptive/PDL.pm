@@ -29,6 +29,7 @@ my @cache_methods = qw /
   geometric_mean harmonic_mean
   max min sample_range
   iqr
+  sum_sqr_sample_weights
 /;
 __PACKAGE__->_make_caching_accessors( \@cache_methods );
 
@@ -62,7 +63,7 @@ sub _make_caching_accessors {
             };
         };
     }
- 
+
     return;
 }
 
@@ -177,6 +178,11 @@ sub sum_weights {
 sub sum_sqr_weights {
     my $self = shift;
     return $self->count;
+}
+
+sub _sum_sqr_sample_weights {
+    my $self = shift;
+    return $self->sum_sqr_weights;
 }
 
 sub _min {
